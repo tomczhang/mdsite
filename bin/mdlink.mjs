@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 // mdlink CLI 入口：解析参数 + 路由子命令。
+import { realpathSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { logger } from '../lib/log.mjs'
 
 const USAGE = `mdlink — 把 Markdown / 对话内容一键变成云端可分享的 HTML 报告
@@ -75,7 +77,16 @@ async function main() {
   }
 }
 
-// 仅作为入口运行时执行（被测试 import 时不跑）
-if (import.meta.url === `file://${process.argv[1]}`) {
+// 仅作为入口运行时执行（被测试 import 时不跑）。
+// 用 realpath 比较，兼容 npm link / 全局安装的软链接入口（argv[1] 是软链，import.meta.url 是真实路径）。
+function isEntrypoint() {
+  if (!process.argv[1]) return false
+  try {
+    return realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)
+  } catch {
+    return false
+  }
+}
+if (isEntrypoint()) {
   main().then((code) => process.exit(code || 0))
 }
