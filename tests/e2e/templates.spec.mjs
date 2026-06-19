@@ -11,9 +11,9 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
 const TPL = path.join(ROOT, 'templates')
-const OUT = path.join(os.tmpdir(), 'mdlink-e2e-site')
+const OUT = path.join(os.tmpdir(), 'mdsite-e2e-site')
 // 截图产物留存在 repo 内，供 review 回看
-const SHOTS = path.join(ROOT, 'test-results', 'mdlink')
+const SHOTS = path.join(ROOT, 'test-results', 'mdsite')
 
 function applyVars(content, vars) {
   return String(content).replace(/\{\{(\w+)\}\}/g, (_, k) =>
@@ -78,8 +78,8 @@ test.afterAll(async () => {
 test('report 页渲染正文', async ({ page }) => {
   await page.goto(`${base}/report/${daysAgo(1)}/recent.html`)
   await expect(page.locator('h1')).toHaveText('近期报告')
-  await expect(page.locator('.prose-mdlink h2')).toHaveText('结论')
-  await expect(page.locator('.prose-mdlink li')).toHaveCount(2)
+  await expect(page.locator('.prose-mdsite h2')).toHaveText('结论')
+  await expect(page.locator('.prose-mdsite li')).toHaveCount(2)
   await page.screenshot({ path: path.join(SHOTS, 'report.png'), fullPage: true })
 })
 

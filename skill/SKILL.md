@@ -1,26 +1,26 @@
 ---
-name: mdlink
-description: 当用户想把当前对话里的分析结论、设计方案、报告内容生成为一个可在线访问、可分享的精美 HTML 页面，并发布到他自己的 GitHub Pages（<user>.github.io/<repo>/）时使用。支持任意 kebab-case 类型（report/spec/review/changelog 等）。最高频用法是「把上面这段对话/分析做成一份在线报告」。触发词：生成报告、做个页面、出个看板、发布 pages、在线 HTML、mdlink、分享链接。
+name: mdsite
+description: 当用户想把当前对话里的分析结论、设计方案、报告内容生成为一个可在线访问、可分享的精美 HTML 页面，并发布到他自己的 GitHub Pages（<user>.github.io/<repo>/）时使用。支持任意 kebab-case 类型（report/spec/review/changelog 等）。最高频用法是「把上面这段对话/分析做成一份在线报告」。触发词：生成报告、做个页面、出个看板、发布 pages、在线 HTML、mdsite、分享链接。
 ---
 
-# mdlink Skill
+# mdsite Skill
 
 把当前对话的分析结论 / 数据 / 方案，生成为独立可访问的 HTML 报告，发布到【用户自己的】GitHub Pages 并返回链接。**内容只部署到用户自己的 GitHub，工具不托管任何内容。**
 
 ## 0. 命令前缀
 
-发布到 npm 后（包名 scoped）：
+发布到 npm 后：
 
 ```bash
-mdlink() { npx -y @tomczhang/mdlink@latest "$@"; }
+mdsite() { npx -y mdsite@latest "$@"; }
 ```
 
-当前（未发布）：从源码 `npm link` 后直接用全局 `mdlink` 命令，或 `node /path/to/mdlink/bin/mdlink.mjs`。
+当前（未发布）：从源码 `npm link` 后直接用全局 `mdsite` 命令，或 `node /path/to/mdsite/bin/mdsite.mjs`。
 
 ## 1. 前置：确保已初始化
 
 ```bash
-mdlink doctor --silent || mdlink init
+mdsite doctor --silent || mdsite init
 ```
 - `init` 会在用户自己的 GitHub 建/复用 repo、开 gh-pages Pages。
 - 认证：用户需 `export GITHUB_TOKEN=…` 或先 `gh auth login`（推荐，token 不落盘）。失败就把错误原文转告用户并停止。
@@ -40,12 +40,12 @@ mdlink doctor --silent || mdlink init
 把提炼出的内容写成一个临时 Markdown（推荐）或 HTML 文件，再 publish：
 
 ```bash
-tmp="$(mktemp -t mdlink-XXXX).md"
+tmp="$(mktemp -t mdsite-XXXX).md"
 cat > "$tmp" <<'MD'
 # 标题
 …（Markdown 正文）…
 MD
-mdlink publish "$tmp" --title "标题" --category report --summary "一句话摘要"
+mdsite publish "$tmp" --title "标题" --category report --summary "一句话摘要"
 rm -f "$tmp"
 ```
 

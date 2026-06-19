@@ -10,7 +10,7 @@ import { repoSyncPlan } from '../lib/repo.mjs'
 import { defaultConfig, writeConfig, readConfig } from '../lib/config.mjs'
 import { renderTemplateTo, varsFromConfig, siteReadme } from '../lib/render.mjs'
 import {
-  MDLINK_HOME, INDEX_HTML, PAGES_JSON, TEMPLATE_DIR_LOCAL,
+  MDSITE_HOME, INDEX_HTML, PAGES_JSON, TEMPLATE_DIR_LOCAL,
 } from '../lib/paths.mjs'
 import { logger } from '../lib/log.mjs'
 
@@ -41,9 +41,9 @@ export async function runInit(args) {
 
   // 2b. 本地 config/origin 与目标 repo 一致性（精确解析，不用 substring）。
   //     算一次 plan，复用于 BLOCK 判定 + 后续 config/origin 修复。
-  const localIsRepo = await isRepo(MDLINK_HOME)
+  const localIsRepo = await isRepo(MDSITE_HOME)
   const prevCfg = await readConfig()
-  const localOrigin = localIsRepo ? await originUrl(MDLINK_HOME) : ''
+  const localOrigin = localIsRepo ? await originUrl(MDSITE_HOME) : ''
   const plan = repoSyncPlan({
     configRepo: prevCfg?.remote?.repo,
     originUrl: localOrigin,
@@ -53,8 +53,8 @@ export async function runInit(args) {
   })
   if (plan.block) {
     logger.error(
-      `本地工作区 ${MDLINK_HOME} 已绑定别的仓库（config: ${prevCfg?.remote?.repo || '无'}，origin: ${localOrigin || '无'}）。\n` +
-      `  想切到 ${repo}：加 --force（会改写本地 config/origin 指向新仓库），或换一个 MDLINK_HOME。`,
+      `本地工作区 ${MDSITE_HOME} 已绑定别的仓库（config: ${prevCfg?.remote?.repo || '无'}，origin: ${localOrigin || '无'}）。\n` +
+      `  想切到 ${repo}：加 --force（会改写本地 config/origin 指向新仓库），或换一个 MDSITE_HOME。`,
     )
     return 2
   }
@@ -65,41 +65,41 @@ export async function runInit(args) {
     logger.info('仓库已存在，复用')
   } else {
     logger.step(`创建仓库 ${repo}…`)
-    await repoCreate(name, { description: 'mdlink 静态报告站点' })
+    await repoCreate(name, { description: 'mdsite 静态报告站点' })
     logger.ok(`已创建 ${repo}`)
   }
 
-  // 4. 覆盖保护：已存在非 mdlink 的 gh-pages 站点 → BLOCK（除非 --force）
+  // 4. 覆盖保护：已存在非 mdsite 的 gh-pages 站点 → BLOCK（除非 --force）
   const state = await ghPagesState(repo, 'gh-pages')
   if (state === 'foreign') {
     if (!force) {
       logger.error(
-        `${repo} 的 gh-pages 分支已有内容，但不是 mdlink 管理的站点。\n` +
+        `${repo} 的 gh-pages 分支已有内容，但不是 mdsite 管理的站点。\n` +
         `  继续会覆盖现有站点。确认要覆盖请加 --force，或换一个 repo（--repo user/other）。`,
       )
       return 2
     }
-    logger.warn(`⚠️ --force：将覆盖 ${repo} 上已有的【非 mdlink】gh-pages 站点`)
+    logger.warn(`⚠️ --force：将覆盖 ${repo} 上已有的【非 mdsite】gh-pages 站点`)
   }
 
   // 5. 本地工作区
   if (localIsRepo) {
-    logger.dim(`复用本地工作区：${MDLINK_HOME}`)
-  } else if (state === 'mdlink') {
-    logger.step(`clone 已有 mdlink 站点到 ${MDLINK_HOME}`)
-    await cloneBranch(repo, MDLINK_HOME, 'gh-pages')
+    logger.dim(`复用本地工作区：${MDSITE_HOME}`)
+  } else if (state === 'mdsite') {
+    logger.step(`clone 已有 mdsite 站点到 ${MDSITE_HOME}`)
+    await cloneBranch(repo, MDSITE_HOME, 'gh-pages')
   } else {
-    logger.step(`初始化本地工作区 ${MDLINK_HOME}`)
-    await initWorkspace(MDLINK_HOME, repo, 'gh-pages')
+    logger.step(`初始化本地工作区 ${MDSITE_HOME}`)
+    await initWorkspace(MDSITE_HOME, repo, 'gh-pages')
   }
 
   // 6. 让 config/origin 权威指向本次 repo（按 plan 修复：config 对但 origin 错也会被修）
   if (plan.writeConfig) {
     await writeConfig(defaultConfig({ account, repo }))
-    logger.ok(`已写入 mdlink.yml（repo=${repo}）`)
+    logger.ok(`已写入 mdsite.yml（repo=${repo}）`)
   }
   if (plan.setOrigin) {
-    await setOrigin(MDLINK_HOME, repo)
+    await setOrigin(MDSITE_HOME, repo)
     logger.ok(`origin → ${repo}`)
   }
   await mkdir(TEMPLATE_DIR_LOCAL, { recursive: true })
@@ -107,21 +107,21 @@ export async function runInit(args) {
   if (!(await exists(PAGES_JSON))) {
     await writeFile(PAGES_JSON, '[]\n', 'utf8')
   }
-  // 写 mdlink 站点标记（覆盖保护探测依据）
-  await writeFile(path.join(MDLINK_HOME, SITE_MARKER),
-    JSON.stringify({ tool: 'mdlink', repo }, null, 2) + '\n', 'utf8')
+  // 写 mdsite 站点标记（覆盖保护探测依据）
+  await writeFile(path.join(MDSITE_HOME, SITE_MARKER),
+    JSON.stringify({ tool: 'mdsite', repo }, null, 2) + '\n', 'utf8')
   // 关掉 Jekyll：纯静态自包含 HTML，避免 Jekyll 忽略点文件/改写产物
-  await writeFile(path.join(MDLINK_HOME, '.nojekyll'), '', 'utf8')
+  await writeFile(path.join(MDSITE_HOME, '.nojekyll'), '', 'utf8')
   // 仓库主页 README（GitHub 在默认分支 gh-pages 主页渲染，含 live 链接）
-  await writeFile(path.join(MDLINK_HOME, 'README.md'), siteReadme(cfg), 'utf8')
+  await writeFile(path.join(MDSITE_HOME, 'README.md'), siteReadme(cfg), 'utf8')
   await renderTemplateTo('index.html', INDEX_HTML, varsFromConfig(cfg))
   logger.ok('已铺设首页 index.html')
 
   // 7. commit + push gh-pages
-  const cb = await commitAll(MDLINK_HOME, 'chore(mdlink): 初始化站点')
+  const cb = await commitAll(MDSITE_HOME, 'chore(mdsite): 初始化站点')
   if (cb.committed) {
     logger.step('push → origin/gh-pages')
-    await push(MDLINK_HOME, { branch: 'gh-pages', setUpstream: true })
+    await push(MDSITE_HOME, { branch: 'gh-pages', setUpstream: true })
   }
 
   // 8. 启用 Pages（分支已存在后再开）

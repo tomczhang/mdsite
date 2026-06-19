@@ -3,7 +3,7 @@ import { access } from 'node:fs/promises'
 import { hasCredential } from '../lib/gh.mjs'
 import { readConfig } from '../lib/config.mjs'
 import { isRepo } from '../lib/git.mjs'
-import { MDLINK_HOME, CONFIG_PATH } from '../lib/paths.mjs'
+import { MDSITE_HOME, CONFIG_PATH } from '../lib/paths.mjs'
 import { logger } from '../lib/log.mjs'
 
 async function exists(p) {
@@ -18,12 +18,12 @@ export async function runDoctor(args) {
   checks.push(['GitHub 凭证（GITHUB_TOKEN 或 gh 登录）', cred,
     '设置 GITHUB_TOKEN 或运行 `gh auth login`'])
 
-  const repo = await isRepo(MDLINK_HOME)
-  checks.push(['本地工作区', repo, '运行 `mdlink init`'])
+  const repo = await isRepo(MDSITE_HOME)
+  checks.push(['本地工作区', repo, '运行 `mdsite init`'])
 
   const cfg = await exists(CONFIG_PATH) ? await readConfig() : null
   const cfgOk = !!(cfg && cfg.remote && cfg.remote.repo)
-  checks.push(['配置 mdlink.yml', cfgOk, '运行 `mdlink init`'])
+  checks.push(['配置 mdsite.yml', cfgOk, '运行 `mdsite init`'])
 
   const allOk = checks.every(([, ok]) => ok)
 

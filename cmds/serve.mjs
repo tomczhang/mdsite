@@ -3,7 +3,7 @@ import http from 'node:http'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import path from 'node:path'
-import { MDLINK_HOME } from '../lib/paths.mjs'
+import { MDSITE_HOME } from '../lib/paths.mjs'
 import { logger } from '../lib/log.mjs'
 
 const MIME = {
@@ -31,7 +31,7 @@ export function safeResolve(root, urlPath) {
 
 export async function runServe(args) {
   const port = Number(args.flags.port) || 1700
-  const root = MDLINK_HOME
+  const root = MDSITE_HOME
 
   const server = http.createServer(async (req, res) => {
     try {

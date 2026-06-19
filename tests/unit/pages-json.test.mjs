@@ -37,7 +37,7 @@ test('readPagesJson：文件不存在 → []', async () => {
 })
 
 test('readPagesJson：损坏的 JSON → 抛错（不静默丢索引）', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'mdlink-pj-'))
+  const dir = await mkdtemp(path.join(tmpdir(), 'mdsite-pj-'))
   const f = path.join(dir, 'pages.json')
   await writeFile(f, '{ not valid json', 'utf8')
   await expect(readPagesJson(f)).rejects.toThrow(/解析失败/)
@@ -45,7 +45,7 @@ test('readPagesJson：损坏的 JSON → 抛错（不静默丢索引）', async 
 })
 
 test('readPagesJson：非数组 → 抛错', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'mdlink-pj-'))
+  const dir = await mkdtemp(path.join(tmpdir(), 'mdsite-pj-'))
   const f = path.join(dir, 'pages.json')
   await writeFile(f, '{"a":1}', 'utf8')
   await expect(readPagesJson(f)).rejects.toThrow(/格式错误/)

@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// mdlink CLI 入口：解析参数 + 路由子命令。
+// mdsite CLI 入口：解析参数 + 路由子命令。
 import { realpathSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { logger } from '../lib/log.mjs'
 
-const USAGE = `mdlink — 把 Markdown / 对话内容一键变成云端可分享的 HTML 报告
+const USAGE = `mdsite — 把 Markdown / 对话内容一键变成云端可分享的 HTML 报告
 
 用法：
-  mdlink init [--repo <user/repo>] [--force]      初始化（建/复用你自己的 GitHub repo + 开 Pages）
-  mdlink publish <file.md|.html> --title <t> --category <c> --summary <s> [--force]
+  mdsite init [--repo <user/repo>] [--force]      初始化（建/复用你自己的 GitHub repo + 开 Pages）
+  mdsite publish <file.md|.html> --title <t> --category <c> --summary <s> [--force]
                                                   生成报告 → 发布到你的 GitHub Pages → 返回链接
-  mdlink doctor [--silent]                         体检：凭证 / 工作区 / 配置
-  mdlink serve [--port <n>]                        本地预览工作区
-  mdlink template list | eject <type>             模板管理（用户层覆盖内置层）
+  mdsite doctor [--silent]                         体检：凭证 / 工作区 / 配置
+  mdsite serve [--port <n>]                        本地预览工作区
+  mdsite template list | eject <type>             模板管理（用户层覆盖内置层）
 
 认证：设置环境变量 GITHUB_TOKEN，或先运行 \`gh auth login\`（推荐，token 不落盘）。`
 

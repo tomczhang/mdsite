@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  项目：mdlink —— 把一段 Markdown / 对话内容一键转换成「云端可分享的精美 HTML 页面」。
+  项目：mdsite —— 把一段 Markdown / 对话内容一键转换成「云端可分享的精美 HTML 页面」。
   形态：skill + CLI（JavaScript / Node ESM，node>=20，用 zx 注入 $/fs/path）。
   分发：BYO-host —— 部署到【每个用户自己的 GitHub】repo + GitHub Pages（gh-pages 分支），
         用用户自己的 GITHUB_TOKEN / gh 凭证。维护者不托管、不聚合任何用户内容，是「工具作者」非「平台方」。
@@ -16,13 +16,13 @@ context: |
     GitHub Pages 下 pipeline 层塌缩成「开一次 Pages + push 即自动部署」）和 git.mjs（clone/commit/push/rebase
     + pages.json 多设备语义合并；逻辑照搬思路但重写）。
   - 产物：单文件自包含 HTML，Tailwind(browser)+Alpine via CDN（cdn.jsdelivr.net，不再用 unpkg.alibaba-inc.com），
-    不引 React/Vue。双层模板：用户 ~/.mdlink/templates/ 覆盖内置。
+    不引 React/Vue。双层模板：用户 ~/.mdsite/templates/ 覆盖内置。
   - 站点首页：当前用户已发布报告的倒序时间轴索引（数据来自本地 pages.json），>30 天默认折叠（纯前端 Alpine，
     折叠阈值必须在浏览时按当前日期算、不能发布时固化）。**红线：索引必须 per-user 去中心，
     严禁任何跨用户汇总入口/中心服务**（否则维护者变平台方、担审核责任）。
   - project pages base 带 /<repo>/ ⇒ 模板内链接/资源必须相对路径或正确 <base>，禁止裸 /index.html 绝对路径。
 
-  本地工作区：~/.mdlink（env MDLINK_HOME 可覆盖），是个 git 仓库；src/pages.json 为报告索引。
+  本地工作区：~/.mdsite（env MDSITE_HOME 可覆盖），是个 git 仓库；src/pages.json 为报告索引。
   publish 输入：.md（markdown.mjs 转正文→灌模板）和 .html（直通）都支持，内部统一产出自包含 HTML。
 
   MVP 范围：CLI 骨架(bin/cmds/lib) + 1 个 report 模板 + markdown→HTML + init/publish/doctor/serve/template

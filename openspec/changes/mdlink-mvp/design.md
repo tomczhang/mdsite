@@ -1,13 +1,13 @@
 ## Context
 
-mdlink 是对内部 `@ali/aper-pages` 的 clean-room 重写：把「Markdown/对话 → 单文件自包含 HTML → 云端可分享链接」的能力，从阿里内网基建（Aone Pages CI + a1 CLI）迁移到**每个用户自己的 GitHub**（repo + Pages + token）。参考源码在本机 `~/Documents/git/pages`，**仅借鉴设计、禁止 copy**，其 gitlab 内部 origin 禁推公开 GitHub。
+mdsite 是对内部 `@ali/aper-pages` 的 clean-room 重写：把「Markdown/对话 → 单文件自包含 HTML → 云端可分享链接」的能力，从阿里内网基建（Aone Pages CI + a1 CLI）迁移到**每个用户自己的 GitHub**（repo + Pages + token）。参考源码在本机 `~/Documents/git/pages`，**仅借鉴设计、禁止 copy**，其 gitlab 内部 origin 禁推公开 GitHub。
 
 经逐文件勘察，阿里耦合只集中在两处薄文件（`lib/a1.mjs` pipeline 层、`lib/git.mjs` remote 常量）；其余（clone/commit/push/rebase + pages.json 多设备语义合并、模板渲染、配置、URL 拼接）是通用逻辑，重写即可。约束硬条件见 specs：`deploy-isolation`（去中心红线）、`site-index`（时间轴+折叠）。
 
 ## Goals / Non-Goals
 
 **Goals:**
-- 跑通「一条命令出可访问链接」：`mdlink publish <md|html> --title --category --summary` → 用户 GitHub Pages 上的真实 URL。
+- 跑通「一条命令出可访问链接」：`mdsite publish <md|html> --title --category --summary` → 用户 GitHub Pages 上的真实 URL。
 - 站点首页 = 该用户报告倒序时间轴，>30 天默认折叠（纯前端）。
 - 阿里→GitHub 的全部耦合收敛在 `lib/gh.mjs` + `lib/git.mjs`，其余 lib 与基建无关。
 - 维护者零后端：所有内容只活在用户自己的 GitHub。
@@ -22,13 +22,13 @@ mdlink 是对内部 `@ali/aper-pages` 的 clean-room 重写：把「Markdown/对
 GitHub Pages 分支部署只能伺服**仓库根**或 `/docs`，不支持 `/src`。
 - 选 **gh-pages 分支 + 内容放分支根**：本地工作区 `src/` 布局不变、`main` 分支保持干净、零 CI workflow。
 - 备选 (a) 本地 src→docs：改动本地布局；(c) GitHub Actions deploy-pages：可部署任意目录但引入 CI 文件、更重。
-- 实现（落地选择）：**~/.mdlink 工作树本身 = gh-pages 分支、站点在工作区根**，`mdlink.yml`/`templates/`/`.cache/` 用 `.gitignore` 排除出站点。比"推 src/ 子树到分支根"的 worktree 方案更简单可靠，且天然满足 Pages 分支根服务。`init` 用 GitHub REST 把 Pages source 设为 `gh-pages` 分支根。
-- **覆盖保护（@Reviewer）**：复用已存在 repo 且其 `gh-pages` 已有内容时，写入前先探测 mdlink 标记（分支根的 `pages.json`/mdlink 生成的 `index.html`）。非 mdlink 站点 → BLOCK 报错，需 `--force` 或单独 import 才覆盖，避免抹掉用户既有 Pages 站点。
+- 实现（落地选择）：**~/.mdsite 工作树本身 = gh-pages 分支、站点在工作区根**，`mdsite.yml`/`templates/`/`.cache/` 用 `.gitignore` 排除出站点。比"推 src/ 子树到分支根"的 worktree 方案更简单可靠，且天然满足 Pages 分支根服务。`init` 用 GitHub REST 把 Pages source 设为 `gh-pages` 分支根。
+- **覆盖保护（@Reviewer）**：复用已存在 repo 且其 `gh-pages` 已有内容时，写入前先探测 mdsite 标记（分支根的 `pages.json`/mdsite 生成的 `index.html`）。非 mdsite 站点 → BLOCK 报错，需 `--force` 或单独 import 才覆盖，避免抹掉用户既有 Pages 站点。
 
 ### D2. 认证走 token-HTTPS，不用 SSH；token 绝不持久化（@Reviewer 强化）
 参考仓的 git.mjs 全程 SSH。BYO + `GITHUB_TOKEN` 场景下重写为 HTTPS 认证。
 - **认证方式优先级**（择不落盘者）：`gh` 凭证助手 > `GIT_ASKPASS` / 一次性 `http.extraHeader`（`Authorization`）> 临时嵌入 remote URL（`https://x-access-token:<TOKEN>@github.com/<repo>.git`）。
-- **token 绝不持久化**：不得长期留在 `~/.mdlink/.git/config`、临时 worktree config、commit 或日志/错误输出。若走临时嵌入 URL，push 后必须还原/清除 remote URL。日志对 token 脱敏（`x-access-token:***`）。
+- **token 绝不持久化**：不得长期留在 `~/.mdsite/.git/config`、临时 worktree config、commit 或日志/错误输出。若走临时嵌入 URL，push 后必须还原/清除 remote URL。日志对 token 脱敏（`x-access-token:***`）。
 - 实现自检：加 grep 测试确保发布后 config/日志里搜不到明文 token。
 - **最小权限引导（@Researcher）**：README/init 默认按风险从低到高推荐——① `gh auth login` 复用（token 不落任何文件）为**首选**；② fine-grained PAT 且 Repository access 限「Only select repositories」为那一个 pages 仓库（Contents:write + Pages:write + 建仓所需 Administration:write）次之；③ classic `repo` PAT 仅作"懒人兜底"且**显式标注风险**（它授予该用户全部仓库读写，泄露 blast radius = 整个 GitHub）。token 读取逻辑不变，只是引导默认拉到最小权限。
 - 好处：用户无需预配 SSH key，CI/headless 友好。
@@ -57,7 +57,7 @@ aper 的 `pipelineCreate/Update/Run`（调 Aone CI 模板 10014197）在 GitHub 
 project pages base 带 `/<repo>/`。模板内导航/资源**禁用裸绝对路径** `/index.html`；用相对路径（`./` / `../`）或在 `<head>` 注入正确 `<base href>`。CDN 外链用绝对 `https://cdn.jsdelivr.net/...`（不受 base 影响）。
 
 ### D8. 目录与依赖
-`bin/mdlink.mjs`（入口+zx 注入）；`cmds/{init,publish,doctor,serve,template}.mjs`；`lib/{gh,git,markdown,render,pages-json,config,url,paths,log}.mjs`；`templates/{index,report}.html`；`skill/SKILL.md`；`tests/{unit,e2e}`。依赖：`zx` + 一个 Markdown 解析器；测试 `vitest` + `@playwright/test`。
+`bin/mdsite.mjs`（入口+zx 注入）；`cmds/{init,publish,doctor,serve,template}.mjs`；`lib/{gh,git,markdown,render,pages-json,config,url,paths,log}.mjs`；`templates/{index,report}.html`；`skill/SKILL.md`；`tests/{unit,e2e}`。依赖：`zx` + 一个 Markdown 解析器；测试 `vitest` + `@playwright/test`。
 
 ## Risks / Trade-offs
 

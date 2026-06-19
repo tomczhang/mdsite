@@ -4,7 +4,7 @@
 工具 SHALL 把所有生成的页面只提交/推送到**最终用户自己配置的 GitHub 仓库**，并由该用户自己的 GitHub Pages（`<user>.github.io/<repo>/`）对外服务；使用的是**用户自己的 GitHub 凭证**（`GITHUB_TOKEN` / `gh` 登录）。维护者 SHALL NOT 在任何由维护者控制的基础设施或域名上托管、代理、缓存用户生成内容。
 
 #### Scenario: publish 只写用户自己的仓库
-- **WHEN** 用户执行 `mdlink publish`
+- **WHEN** 用户执行 `mdsite publish`
 - **THEN** 内容只用该用户的 `GITHUB_TOKEN` 提交并 push 到该用户配置的 repo，并从该用户的 `<user>.github.io/<repo>/` 提供访问
 - **AND** 整个发布/部署过程不向任何维护者运营的后端发起请求
 

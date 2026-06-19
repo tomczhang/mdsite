@@ -19,5 +19,5 @@ test('buildAnnotatedYaml 可被 YAML 解析回来', () => {
 
 test('注释存在', () => {
   const text = buildAnnotatedYaml(defaultConfig({ account: 'a', repo: 'a/pages' }))
-  expect(text).toContain('# mdlink 配置文件')
+  expect(text).toContain('# mdsite 配置文件')
 })

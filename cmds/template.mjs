@@ -33,7 +33,7 @@ export async function runTemplate(args) {
 
   if (sub === 'eject') {
     const type = args._[1]
-    if (!type) { logger.error('用法：mdlink template eject <type>'); return 2 }
+    if (!type) { logger.error('用法：mdsite template eject <type>'); return 2 }
     const file = type.endsWith('.html') ? type : `${type}.html`
     const src = path.join(CLI_TEMPLATES_DIR, file)
     if (!(await exists(src))) { logger.error(`内置模板不存在：${file}`); return 2 }
@@ -44,6 +44,6 @@ export async function runTemplate(args) {
     return 0
   }
 
-  logger.error('用法：mdlink template list | eject <type>')
+  logger.error('用法：mdsite template list | eject <type>')
   return 2
 }
