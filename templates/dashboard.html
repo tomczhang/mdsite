@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  {{FAVICON}}
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; color:#1f2329; }
+    /* KPI 数字卡 */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:1.2rem 0}
+    .kpi-card{background:#fff;border:1px solid #eef0f2;border-radius:12px;padding:1.1rem 1.25rem;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .kpi-label{font-size:.82rem;color:#86909c;margin-bottom:.35rem}
+    .kpi-value{font-size:1.9rem;font-weight:700;color:#1f2329;line-height:1.1}
+    .kpi-delta{font-size:.8rem;margin-top:.4rem;font-weight:600}
+    .kpi-delta.up{color:#009a29}.kpi-delta.down{color:#cb2634}.kpi-delta.flat{color:#86909c}
+    /* 图表卡 */
+    .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.2rem;margin:1.2rem 0}
+    .chart-card{background:#fff;border:1px solid #eef0f2;border-radius:12px;padding:1rem 1.1rem}
+    .chart-card h3{font-size:.95rem;font-weight:600;color:#1f2329;margin-bottom:.6rem}
+    .chart{width:100%;height:300px}
+    /* 正文（说明文字/表格） */
+    .prose-mdsite{font-size:15px;line-height:1.8;color:#4e5969}
+    .prose-mdsite h2{font-size:1.25rem;font-weight:600;color:#1f2329;margin:1.8rem 0 .8rem}
+    .prose-mdsite table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;background:#fff}
+    .prose-mdsite th,.prose-mdsite td{border:1px solid #e5e6eb;padding:.5rem .8rem;text-align:left}
+    .prose-mdsite th{background:#f7f8fa;font-weight:600}.prose-mdsite tr:nth-child(even) td{background:#fafbfc}
+    .prose-mdsite code{background:#f2f3f5;color:#d4380d;padding:.1rem .35rem;border-radius:4px;font-size:.88em}
+    .prose-mdsite ul{list-style:disc;padding-left:1.5rem;margin:.7rem 0}.prose-mdsite li{margin:.3rem 0}
+    .badge{display:inline-block;padding:.05rem .5rem;border-radius:999px;font-size:.72rem;font-weight:600}
+    .badge-green{background:#e8f9ee;color:#009a29}.badge-blue{background:#eaf2ff;color:#1677ff}.badge-gray{background:#f2f3f5;color:#6b7280}.badge-amber{background:#fff3e0;color:#d97500}
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-white border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+      <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600">&larr; 返回首页</a>
+      <span class="text-xs text-gray-400">{{DATE}}</span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <div class="mb-6">
+      <p class="text-xs uppercase tracking-widest text-blue-600 font-semibold mb-1">{{CATEGORY}}</p>
+      <h1 class="text-2xl font-bold text-gray-900">{{TITLE}}</h1>
+      <p class="mt-2 text-gray-500">{{SUMMARY}}</p>
+    </div>
+
+    <!-- 看板正文：KPI 卡 / 图表 / 表格由内容提供 -->
+    <article id="article" class="prose-mdsite">
+      {{BODY}}
+    </article>
+
+    <footer class="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-400">
+      由 <span class="font-medium text-gray-500">{{SITE_TITLE}}</span> 生成 · {{DATE}}
+    </footer>
+  </main>
+
+  <script>
+    // 声明式图表：<div class="chart" data-echarts='{...echarts option JSON...}'></div> 自动渲染
+    (function () {
+      if (typeof echarts === 'undefined') return;
+      const charts = [];
+      document.querySelectorAll('.chart[data-echarts]').forEach((el) => {
+        try {
+          const opt = JSON.parse(el.getAttribute('data-echarts'));
+          const c = echarts.init(el);
+          c.setOption(opt);
+          charts.push(c);
+        } catch (e) { el.innerHTML = '<p style="color:#cb2634;font-size:13px">图表配置解析失败</p>'; }
+      });
+      window.addEventListener('resize', () => charts.forEach((c) => c.resize()));
+    })();
+  </script>
+</body>
+</html>

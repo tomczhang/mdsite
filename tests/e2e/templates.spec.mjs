@@ -8,6 +8,7 @@ import { readFile, writeFile, mkdir, rm, stat } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { MDSITE_FAVICON_LINK } from '../../lib/brand.mjs'
 import { mdToHtml } from '../../lib/markdown.mjs'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
@@ -17,8 +18,9 @@ const OUT = path.join(os.tmpdir(), 'mdsite-e2e-site')
 const SHOTS = path.join(ROOT, 'test-results', 'mdsite')
 
 function applyVars(content, vars) {
+  const merged = { FAVICON: MDSITE_FAVICON_LINK, ...vars }
   return String(content).replace(/\{\{(\w+)\}\}/g, (_, k) =>
-    Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k] ?? '') : '')
+    Object.prototype.hasOwnProperty.call(merged, k) ? String(merged[k] ?? '') : '')
 }
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8' }
@@ -90,6 +92,7 @@ test.afterAll(async () => {
 
 test('report 页渲染正文 + 摘要 + 自动大纲', async ({ page }) => {
   await page.goto(`${base}/report/${daysAgo(1)}/recent.html`)
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', /data:image\/svg\+xml/)
   await expect(page.locator('h1')).toHaveText('近期报告')
   await expect(page.getByText('这是一句摘要。')).toBeVisible()
   await expect(page.locator('.prose-mdsite h2').first()).toHaveText('结论')
@@ -124,4 +127,37 @@ test('index 时间轴：旧报告默认折叠、可展开', async ({ page }) => 
   await toggle.click()
   await expect(page.getByText('陈年报告')).toBeVisible()
   await page.screenshot({ path: path.join(SHOTS, 'index-expanded.png'), fullPage: true })
+})
+
+test('doc 模板：左侧自动导航从标题生成', async ({ page }) => {
+  const tpl = await readFile(path.join(TPL, 'doc.html'), 'utf8')
+  const body = mdToHtml(['## 第一章', '内容一。', '### 小节', 'x', '## 第二章', '内容二。'].join('\n'))
+  await writeFile(path.join(OUT, 'doc.html'), applyVars(tpl, {
+    TITLE: '文档标题', DATE: daysAgo(1), CATEGORY: 'doc', SUMMARY: '一句话摘要',
+    BODY: body, SITE_TITLE: 'Test Pages', ROOT: './',
+  }), 'utf8')
+  await page.goto(`${base}/doc.html`)
+  await page.waitForTimeout(400)
+  await expect(page.locator('#nav .nav-link')).toHaveCount(3) // 2 个 h2 + 1 个 h3
+  await expect(page.locator('#article h2').first()).toHaveText('第一章')
+  await page.screenshot({ path: path.join(SHOTS, 'doc.png'), fullPage: true })
+})
+
+test('dashboard 模板：KPI 卡 + echarts 图表渲染', async ({ page }) => {
+  const tpl = await readFile(path.join(TPL, 'dashboard.html'), 'utf8')
+  const body = [
+    '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-label">DAU</div><div class="kpi-value">12,345</div><div class="kpi-delta up">+5.2%</div></div></div>',
+    '',
+    '<div class="chart-card"><h3>趋势</h3><div class="chart" data-echarts=\'{"xAxis":{"type":"category","data":["一","二","三"]},"yAxis":{"type":"value"},"series":[{"type":"line","data":[12,20,15]}]}\'></div></div>',
+  ].join('\n')
+  await writeFile(path.join(OUT, 'dash.html'), applyVars(tpl, {
+    TITLE: '看板标题', DATE: daysAgo(1), CATEGORY: 'dashboard', SUMMARY: '指标概览',
+    BODY: body, SITE_TITLE: 'Test Pages', ROOT: './',
+  }), 'utf8')
+  await page.goto(`${base}/dash.html`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(800)
+  await expect(page.locator('.kpi-card .kpi-value')).toHaveText('12,345')
+  // echarts 渲染出 canvas
+  await expect(page.locator('.chart canvas')).toHaveCount(1)
+  await page.screenshot({ path: path.join(SHOTS, 'dashboard.png'), fullPage: true })
 })

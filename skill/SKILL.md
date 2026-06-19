@@ -53,6 +53,28 @@ rm -f "$tmp"
 - `--category` 任意 kebab-case（report / spec / review / dashboard / changelog…）。
 - 物化用安全临时路径，发布后清理临时文件。
 
+### 3.0 选对模板（`--template`）
+
+| 模板 | `--template` | 适合 | 版式 |
+|---|---|---|---|
+| 报告（默认） | `report` | 分析/周报/复盘 | 标题+摘要+正文+右侧大纲 |
+| 文档 | `doc` | 长文档/手册/教程 | 全宽：左侧自动导航（从 `##` 标题）+ 宽内容 |
+| 看板 | `dashboard` | 指标/数据看板 | KPI 数字卡 + echarts 图表 |
+| 自定义整页 | （整页 `.html` 直通） | SPA/复杂交互 | 你自己的完整 HTML |
+
+**doc**：正文用 `##`/`###` 分节，左侧导航自动生成。
+**dashboard**：正文里放 KPI 卡和图表（Markdown 可内嵌 HTML，**前后空行**）：
+```html
+<div class="kpi-grid">
+  <div class="kpi-card"><div class="kpi-label">DAU</div><div class="kpi-value">12,345</div><div class="kpi-delta up">+5.2%</div></div>
+</div>
+
+<div class="chart-card"><h3>趋势</h3>
+  <div class="chart" data-echarts='{"xAxis":{"type":"category","data":["一","二","三"]},"yAxis":{"type":"value"},"series":[{"type":"line","data":[12,20,15]}]}'></div>
+</div>
+```
+图表用 `<div class="chart" data-echarts='<echarts option JSON>'>`，会自动渲染。kpi-delta 用 `up`/`down`/`flat`。
+
 ### 3.1 报告结构与排版规范（重要，决定成品好不好看）
 
 **总是以「摘要 + 速览」开头**：

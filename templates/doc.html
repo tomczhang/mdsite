@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  {{FAVICON}}
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; color:#1f2329; }
+    html { scroll-behavior: smooth; }
+    [x-cloak]{display:none}
+    ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#dfe3e8;border-radius:4px}
+    /* 左侧导航（从正文标题自动生成） */
+    .nav-link{position:relative;display:block;padding:6px 12px;border-radius:8px;font-size:14px;color:#4e5969;cursor:pointer;transition:.12s}
+    .nav-link:hover{background:#f4f5f7;color:#1f2329}
+    .nav-link.active{background:#eef4ff;color:#1677ff;font-weight:600}
+    .nav-link.active::before{content:"";position:absolute;left:-9px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:2px;background:#1677ff}
+    .nav-link.lvl-3{padding-left:24px;font-size:13px;color:#86909c}
+    /* 正文排版 */
+    .prose-mdsite{font-size:16px;line-height:1.85}
+    .prose-mdsite>:first-child{margin-top:0}
+    .prose-mdsite h2{font-size:1.45rem;font-weight:600;margin:2.2rem 0 .9rem;padding-bottom:.4rem;border-bottom:1px solid #f0f0f0;scroll-margin-top:5rem}
+    .prose-mdsite h3{font-size:1.18rem;font-weight:600;margin:1.6rem 0 .6rem;scroll-margin-top:5rem}
+    .prose-mdsite h4{font-size:1rem;font-weight:600;margin:1.2rem 0 .5rem;color:#424750}
+    .prose-mdsite p{margin:.9rem 0}
+    .prose-mdsite ul,.prose-mdsite ol{margin:.9rem 0;padding-left:1.6rem}
+    .prose-mdsite li{margin:.4rem 0}.prose-mdsite ul{list-style:disc}.prose-mdsite ol{list-style:decimal}
+    .prose-mdsite li::marker{color:#86909c}
+    .prose-mdsite a{color:#1677ff;border-bottom:1px solid rgba(22,119,255,.3)}
+    .prose-mdsite strong{font-weight:600}
+    .prose-mdsite code{background:#f2f3f5;color:#d4380d;padding:.12rem .4rem;border-radius:4px;font-size:.88em;font-family:ui-monospace,Menlo,monospace}
+    .prose-mdsite kbd{display:inline-block;background:#fafbfc;border:1px solid #d0d7de;border-bottom-width:2px;border-radius:5px;padding:.05rem .4rem;font-size:.82em;font-family:ui-monospace,Menlo,monospace}
+    .prose-mdsite pre{background:#0d1117;border-radius:10px;padding:1.1rem 1.3rem;overflow-x:auto;margin:1.2rem 0}
+    .prose-mdsite pre code{background:transparent;color:#e6edf3;padding:0;font-size:.9rem;line-height:1.7}
+    .prose-mdsite blockquote{border-left:3px solid #1677ff;background:#f7f9ff;padding:.6rem 1rem;color:#4e5969;margin:1.1rem 0;border-radius:0 6px 6px 0}
+    .prose-mdsite table{border-collapse:collapse;width:100%;margin:1.2rem 0;font-size:.92rem}
+    .prose-mdsite th,.prose-mdsite td{border:1px solid #e5e6eb;padding:.55rem .85rem;text-align:left}
+    .prose-mdsite th{background:#f7f8fa;font-weight:600}.prose-mdsite tr:nth-child(even) td{background:#fafbfc}
+    .prose-mdsite hr{border:none;border-top:1px solid #f0f0f0;margin:2rem 0}
+    .badge{display:inline-block;padding:.05rem .5rem;border-radius:999px;font-size:.72rem;font-weight:600}
+    .badge-green{background:#e8f9ee;color:#009a29}.badge-blue{background:#eaf2ff;color:#1677ff}.badge-gray{background:#f2f3f5;color:#6b7280}.badge-amber{background:#fff3e0;color:#d97500}
+    .callout{margin:1.1rem 0;padding:.7rem 1rem;border-left:4px solid;border-radius:0 8px 8px 0}
+    .callout-title{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem}
+    .callout-body>:first-child{margin-top:0}.callout-body>:last-child{margin-bottom:0}
+    .callout-note{background:#f2f7ff;border-color:#1677ff}.callout-note .callout-title{color:#1677ff}
+    .callout-tip{background:#f0faf4;border-color:#00b42a}.callout-tip .callout-title{color:#009a29}
+    .callout-important{background:#f6f2ff;border-color:#7b5cff}.callout-important .callout-title{color:#6a3ff0}
+    .callout-warning{background:#fff9ec;border-color:#ff9a2e}.callout-warning .callout-title{color:#d97500}
+    .callout-caution{background:#fff1f0;border-color:#f53f3f}.callout-caution .callout-title{color:#cb2634}
+  </style>
+</head>
+<body class="bg-white" x-data="{ open:false }">
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100 h-14 flex items-center gap-3 px-4">
+    <button class="lg:hidden p-2 -ml-2 text-gray-500" @click="open=!open" aria-label="菜单">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600">&larr; 全部</a>
+    <span class="font-semibold text-gray-900 truncate">{{TITLE}}</span>
+    <span class="ml-auto text-xs text-gray-400">{{DATE}}</span>
+  </header>
+
+  <div class="flex">
+    <!-- 左侧自动导航 -->
+    <aside class="fixed lg:sticky top-14 z-20 h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto bg-[#fbfcfd] border-r border-gray-100 px-3 py-4 transition-transform"
+           :class="open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 mb-2" id="nav-title" style="display:none">目录</p>
+      <nav id="nav"></nav>
+    </aside>
+    <div class="fixed inset-0 top-14 bg-black/30 z-10 lg:hidden" x-show="open" x-cloak @click="open=false"></div>
+
+    <main class="flex-1 min-w-0 px-6 lg:px-12 py-9">
+      <header class="mb-7 pb-5 border-b border-gray-100 max-w-3xl">
+        <p class="text-xs uppercase tracking-widest text-blue-600 font-semibold mb-2">{{CATEGORY}}</p>
+        <h1 class="text-3xl font-bold text-gray-900 leading-tight">{{TITLE}}</h1>
+        <div class="mt-4 bg-blue-50/70 border-l-4 border-blue-500 px-4 py-3 rounded-r-lg">
+          <p class="text-[15px] text-gray-600 leading-relaxed">{{SUMMARY}}</p>
+        </div>
+      </header>
+      <article id="article" class="prose-mdsite max-w-3xl">
+        {{BODY}}
+      </article>
+      <footer class="border-t border-gray-100 pt-6 mt-12 text-sm text-gray-400 max-w-3xl">
+        由 <span class="font-medium text-gray-500">{{SITE_TITLE}}</span> 生成 · {{DATE}}
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // 从正文 h2/h3 自动生成左侧导航 + 滚动高亮
+    (function () {
+      const article = document.getElementById('article'), nav = document.getElementById('nav');
+      const heads = article.querySelectorAll('h2, h3');
+      if (!heads.length) return;
+      document.getElementById('nav-title').style.display = '';
+      const slug = (t, i) => (t.toLowerCase().replace(/[^\w一-龥]+/g, '-').replace(/^-+|-+$/g, '') || 'sec') + '-' + i;
+      heads.forEach((h, i) => {
+        if (!h.id) h.id = slug(h.textContent, i);
+        const a = document.createElement('a');
+        a.href = '#' + h.id; a.textContent = h.textContent;
+        a.className = 'nav-link' + (h.tagName === 'H3' ? ' lvl-3' : '');
+        nav.appendChild(a);
+      });
+      const links = nav.querySelectorAll('.nav-link');
+      const obs = new IntersectionObserver((es) => es.forEach((e) => {
+        if (e.isIntersecting) { links.forEach(l => l.classList.remove('active'));
+          const a = nav.querySelector('a[href="#' + e.target.id + '"]'); if (a) a.classList.add('active'); }
+      }), { rootMargin: '-10% 0px -75% 0px' });
+      heads.forEach(h => obs.observe(h));
+    })();
+  </script>
+</body>
+</html>

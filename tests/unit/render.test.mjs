@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { applyVars, siteTitleOf, varsFromConfig, siteReadme } from '../../lib/render.mjs'
+import { applyVars, renderTemplate, siteTitleOf, varsFromConfig, siteReadme } from '../../lib/render.mjs'
 
 test('applyVars 替换占位且无残留', () => {
   const out = applyVars('<h1>{{TITLE}}</h1><p>{{BODY}}</p>', { TITLE: 'Hi', BODY: 'x' })
@@ -31,4 +31,19 @@ test('siteReadme 含标题与 live 链接', () => {
   expect(md).toContain('# Pages')
   expect(md).toContain('https://alice.github.io/pages/')
   expect(md).toContain('gh-pages')
+})
+
+test('内置模板使用统一 mdsite favicon', async () => {
+  const html = await renderTemplate('report.html', {
+    TITLE: 'T',
+    DATE: '2026-06-20',
+    CATEGORY: 'report',
+    SUMMARY: 'S',
+    BODY: '<p>B</p>',
+    SITE_TITLE: 'Pages',
+    ROOT: '../../',
+  })
+  expect(html).toContain('rel="icon"')
+  expect(html).toContain('data:image/svg+xml')
+  expect(html).not.toContain('📄')
 })

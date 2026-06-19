@@ -8,8 +8,9 @@ const USAGE = `mdsite — 把 Markdown / 对话内容一键变成云端可分享
 
 用法：
   mdsite init [--repo <user/repo>] [--force]      初始化（建/复用你自己的 GitHub repo + 开 Pages）
-  mdsite publish <file.md|.html> --title <t> --category <c> --summary <s> [--force]
-                                                  生成报告 → 发布到你的 GitHub Pages → 返回链接
+  mdsite publish <file.md|.html> --title <t> --category <c> --summary <s>
+         [--template report|doc|dashboard] [--raw] [--force]
+                                                  生成页面 → 发布到你的 GitHub Pages → 返回链接
   mdsite doctor [--silent]                         体检：凭证 / 工作区 / 配置
   mdsite serve [--port <n>]                        本地预览工作区
   mdsite template list | eject <type>             模板管理（用户层覆盖内置层）

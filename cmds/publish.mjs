@@ -90,9 +90,12 @@ export async function runPublish(args) {
   const root = '../'.repeat(relPath.split('/').length - 1) // 报告页回根的相对前缀
 
   const repoName = String(cfg.remote.repo).split('/')[1] || 'pages'
+  // 选用模板：--template <type>（默认 report），解析 <type>.html（用户层可覆盖）
+  const tplType = String(args.flags.template || 'report')
+  const tplFile = cfg.templates?.[tplType] || `${tplType}.html`
   const html = rawPassthrough
     ? raw // 整页文档原样写出，不套模板
-    : await renderTemplate(cfg.templates?.report || 'report.html', {
+    : await renderTemplate(tplFile, {
         TITLE: title,
         DATE: date,
         CATEGORY: category,
