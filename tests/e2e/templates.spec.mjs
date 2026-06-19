@@ -138,7 +138,10 @@ test('doc 模板：左侧自动导航从标题生成', async ({ page }) => {
   }), 'utf8')
   await page.goto(`${base}/doc.html`)
   await page.waitForTimeout(400)
-  await expect(page.locator('#nav .nav-link')).toHaveCount(3) // 2 个 h2 + 1 个 h3
+  // 左侧 section 导航只放 h2（2 个章节）
+  await expect(page.locator('#nav .nav-link')).toHaveCount(2)
+  // 右侧本页目录放 h2+h3（2+1=3）
+  await expect(page.locator('#toc .toc-link')).toHaveCount(3)
   await expect(page.locator('#article h2').first()).toHaveText('第一章')
   await page.screenshot({ path: path.join(SHOTS, 'doc.png'), fullPage: true })
 })

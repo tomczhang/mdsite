@@ -12,13 +12,17 @@
     html { scroll-behavior: smooth; }
     [x-cloak]{display:none}
     ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#dfe3e8;border-radius:4px}
-    /* 左侧导航（从正文标题自动生成） */
-    .nav-link{position:relative;display:block;padding:6px 12px;border-radius:8px;font-size:14px;color:#4e5969;cursor:pointer;transition:.12s}
+    /* 左侧 section 导航 */
+    .nav-link{position:relative;display:block;padding:7px 12px;border-radius:8px;font-size:14px;color:#4e5969;cursor:pointer;transition:.12s}
     .nav-link:hover{background:#f4f5f7;color:#1f2329}
     .nav-link.active{background:#eef4ff;color:#1677ff;font-weight:600}
     .nav-link.active::before{content:"";position:absolute;left:-9px;top:50%;transform:translateY(-50%);width:3px;height:16px;border-radius:2px;background:#1677ff}
-    .nav-link.lvl-3{padding-left:24px;font-size:13px;color:#86909c}
-    /* 正文排版 */
+    /* 右侧本页目录 */
+    .toc-link{display:block;padding:3px 0 3px 12px;font-size:13px;line-height:1.5;color:#86909c;border-left:2px solid #eef0f2;cursor:pointer;transition:.12s}
+    .toc-link:hover{color:#1f2329}
+    .toc-link.active{color:#1677ff;border-left-color:#1677ff;font-weight:500}
+    .toc-link.lvl-3{padding-left:24px;font-size:12px}
+    /* 正文 */
     .prose-mdsite{font-size:16px;line-height:1.85}
     .prose-mdsite>:first-child{margin-top:0}
     .prose-mdsite h2{font-size:1.45rem;font-weight:600;margin:2.2rem 0 .9rem;padding-bottom:.4rem;border-bottom:1px solid #f0f0f0;scroll-margin-top:5rem}
@@ -56,20 +60,21 @@
     <button class="lg:hidden p-2 -ml-2 text-gray-500" @click="open=!open" aria-label="菜单">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600">&larr; 全部</a>
+    <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600 shrink-0">&larr; 全部</a>
     <span class="font-semibold text-gray-900 truncate">{{TITLE}}</span>
-    <span class="ml-auto text-xs text-gray-400">{{DATE}}</span>
+    <span class="ml-auto text-xs text-gray-400 shrink-0 hidden sm:inline">{{DATE}}</span>
   </header>
 
   <div class="flex">
-    <!-- 左侧自动导航 -->
-    <aside class="fixed lg:sticky top-14 z-20 h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto bg-[#fbfcfd] border-r border-gray-100 px-3 py-4 transition-transform"
+    <!-- 左：section 导航 -->
+    <aside class="fixed lg:sticky top-14 z-20 h-[calc(100vh-3.5rem)] w-60 shrink-0 overflow-y-auto bg-[#fbfcfd] border-r border-gray-100 px-3 py-5 transition-transform"
            :class="open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
-      <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 mb-2" id="nav-title" style="display:none">目录</p>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 mb-2" id="nav-title" style="display:none">章节</p>
       <nav id="nav"></nav>
     </aside>
     <div class="fixed inset-0 top-14 bg-black/30 z-10 lg:hidden" x-show="open" x-cloak @click="open=false"></div>
 
+    <!-- 中：内容 -->
     <main class="flex-1 min-w-0 px-6 lg:px-12 py-9">
       <header class="mb-7 pb-5 border-b border-gray-100 max-w-3xl">
         <p class="text-xs uppercase tracking-widest text-blue-600 font-semibold mb-2">{{CATEGORY}}</p>
@@ -85,27 +90,49 @@
         由 <span class="font-medium text-gray-500">{{SITE_TITLE}}</span> 生成 · {{DATE}}
       </footer>
     </main>
+
+    <!-- 右：本页目录（宽屏，填满右侧空间） -->
+    <aside class="hidden xl:block w-56 shrink-0 px-4 py-9">
+      <div class="sticky top-20">
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 pl-3" id="toc-title" style="display:none">本页目录</p>
+        <nav id="toc"></nav>
+      </div>
+    </aside>
   </div>
 
   <script>
-    // 从正文 h2/h3 自动生成左侧导航 + 滚动高亮
     (function () {
-      const article = document.getElementById('article'), nav = document.getElementById('nav');
+      const article = document.getElementById('article');
+      const nav = document.getElementById('nav'), toc = document.getElementById('toc');
       const heads = article.querySelectorAll('h2, h3');
       if (!heads.length) return;
-      document.getElementById('nav-title').style.display = '';
       const slug = (t, i) => (t.toLowerCase().replace(/[^\w一-龥]+/g, '-').replace(/^-+|-+$/g, '') || 'sec') + '-' + i;
-      heads.forEach((h, i) => {
-        if (!h.id) h.id = slug(h.textContent, i);
-        const a = document.createElement('a');
-        a.href = '#' + h.id; a.textContent = h.textContent;
-        a.className = 'nav-link' + (h.tagName === 'H3' ? ' lvl-3' : '');
-        nav.appendChild(a);
+      heads.forEach((h, i) => { if (!h.id) h.id = slug(h.textContent, i); });
+      // 左侧：只放 h2（章节级），作主导航
+      const h2s = [...heads].filter(h => h.tagName === 'H2');
+      if (h2s.length) {
+        document.getElementById('nav-title').style.display = '';
+        h2s.forEach(h => {
+          const a = document.createElement('a'); a.href = '#' + h.id; a.textContent = h.textContent;
+          a.className = 'nav-link'; a.dataset.id = h.id; nav.appendChild(a);
+        });
+      }
+      // 右侧：本页目录（h2+h3 全量，滚动高亮）
+      document.getElementById('toc-title').style.display = '';
+      heads.forEach(h => {
+        const a = document.createElement('a'); a.href = '#' + h.id; a.textContent = h.textContent;
+        a.className = 'toc-link' + (h.tagName === 'H3' ? ' lvl-3' : ''); a.dataset.id = h.id; toc.appendChild(a);
       });
-      const links = nav.querySelectorAll('.nav-link');
+      const navLinks = nav.querySelectorAll('.nav-link'), tocLinks = toc.querySelectorAll('.toc-link');
       const obs = new IntersectionObserver((es) => es.forEach((e) => {
-        if (e.isIntersecting) { links.forEach(l => l.classList.remove('active'));
-          const a = nav.querySelector('a[href="#' + e.target.id + '"]'); if (a) a.classList.add('active'); }
+        if (!e.isIntersecting) return;
+        const id = e.target.id;
+        tocLinks.forEach(l => l.classList.toggle('active', l.dataset.id === id));
+        // 左侧高亮：当前标题，或其所属最近的 h2
+        let h2id = id;
+        const el = document.getElementById(id);
+        if (el && el.tagName === 'H3') { let p = el; while (p && p.tagName !== 'H2') p = p.previousElementSibling; if (p) h2id = p.id; }
+        navLinks.forEach(l => l.classList.toggle('active', l.dataset.id === h2id));
       }), { rootMargin: '-10% 0px -75% 0px' });
       heads.forEach(h => obs.observe(h));
     })();
