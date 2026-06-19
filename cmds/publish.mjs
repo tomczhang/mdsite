@@ -2,7 +2,7 @@
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises'
 import path from 'node:path'
 import { readConfig } from '../lib/config.mjs'
-import { mdToHtml } from '../lib/markdown.mjs'
+import { mdToHtml, isFullHtmlDoc } from '../lib/markdown.mjs'
 import { renderTemplate, renderTemplateTo, varsFromConfig, siteTitleOf } from '../lib/render.mjs'
 import { makeFilename, uniqueName } from '../lib/slug.mjs'
 import { readPagesJson, writePagesJson } from '../lib/pages-json.mjs'
@@ -62,9 +62,13 @@ export async function runPublish(args) {
   // 多设备同步：拉远端最新（pages.json 冲突自动语义合并）
   await syncWithOrigin()
 
-  // 渲染正文：.md → marked；.html → 直通
+  // 渲染策略：
+  //   - 整页 HTML 文档(含 <html>) 或 --raw → 原样直通发布(不套报告模板)，适合 SPA/自定义页
+  //   - .md → marked 转正文，灌入 report 模板
+  //   - .html 片段 → 作为正文灌入 report 模板
   const raw = await readFile(input, 'utf8')
   const isHtml = /\.html?$/i.test(input)
+  const rawPassthrough = !!args.flags.raw || (isHtml && isFullHtmlDoc(raw))
   const body = isHtml ? raw : mdToHtml(raw)
 
   // 路径：<category>/<YYYY-MM-DD>/<slug>.html。
@@ -86,17 +90,20 @@ export async function runPublish(args) {
   const root = '../'.repeat(relPath.split('/').length - 1) // 报告页回根的相对前缀
 
   const repoName = String(cfg.remote.repo).split('/')[1] || 'pages'
-  const html = await renderTemplate(cfg.templates?.report || 'report.html', {
-    TITLE: title,
-    DATE: date,
-    CATEGORY: category,
-    SUMMARY: summary,
-    BODY: body,
-    SITE_TITLE: cfg.site?.title || siteTitleOf(repoName),
-    ROOT: root,
-  })
+  const html = rawPassthrough
+    ? raw // 整页文档原样写出，不套模板
+    : await renderTemplate(cfg.templates?.report || 'report.html', {
+        TITLE: title,
+        DATE: date,
+        CATEGORY: category,
+        SUMMARY: summary,
+        BODY: body,
+        SITE_TITLE: cfg.site?.title || siteTitleOf(repoName),
+        ROOT: root,
+      })
   await mkdir(path.dirname(absPath), { recursive: true })
   await writeFile(absPath, html, 'utf8')
+  if (rawPassthrough) logger.dim('整页 HTML 直通发布（未套报告模板）')
   logger.ok(`已生成 ${relPath}`)
 
   // 更新索引（最新在前）。filename 即站点根的相对 URL。

@@ -8,11 +8,18 @@
 - **THEN** 生成的页面正文是对应的 HTML（标题成 `<h*>`、列表成 `<ul>/<ol>`、代码块成 `<pre><code>`）
 
 ### Requirement: HTML 输入直通
-当 publish 输入是 `.html` 时，工具 SHALL 把其作为正文直通（不做 Markdown 解析），以支持 agent/skill 产出的精装页面。
+当 publish 输入是 `.html` 时，工具 SHALL 不做 Markdown 解析，并按其形态选择发布方式：
+- **整页 HTML 文档**（含 `<!doctype html>` 或 `<html>`，如 SPA/自定义页）SHALL **原样发布**——直接作为最终页面写出，**不套报告模板**（否则会出现文档套文档、外壳错位）；
+- **HTML 片段**（无 `<html>`）SHALL 作为正文灌入 report 模板。
+- 另提供 `--raw` 显式强制原样发布。
 
-#### Scenario: HTML 直通
-- **WHEN** 输入是 `.html` 文件
-- **THEN** 其内容作为正文使用，不经 Markdown 解析改写
+#### Scenario: 整页 HTML 文档原样发布
+- **WHEN** 输入是含 `<html>` 的整页 HTML（如前端路由 SPA）
+- **THEN** 该 HTML 被原样写为最终页面，不嵌入 report 模板（页面自身即完整文档，独占视口）
+
+#### Scenario: HTML 片段作为正文
+- **WHEN** 输入是无 `<html>` 的 HTML 片段
+- **THEN** 其内容作为正文灌入 report 模板，不经 Markdown 解析改写
 
 ### Requirement: 模板占位渲染产出自包含 HTML
 工具 SHALL 通过占位替换把正文与元数据（如标题、日期、站点标题）灌入模板，产物 SHALL 是**单文件自包含 HTML**（样式/交互依赖通过 CDN 引入，不产生本地散资源、不引 React/Vue 框架）。

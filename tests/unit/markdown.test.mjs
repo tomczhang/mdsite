@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { mdToHtml, transformAlerts } from '../../lib/markdown.mjs'
+import { mdToHtml, transformAlerts, isFullHtmlDoc } from '../../lib/markdown.mjs'
 
 test('标题转 h*', () => {
   expect(mdToHtml('# Hello')).toContain('<h1>Hello</h1>')
@@ -47,6 +47,14 @@ test('alert 标记单独成行(后接列表) 不留空 <p>', () => {
   expect(html).toContain('callout-warning')
   expect(html).not.toMatch(/callout-body">\s*<p>\s*<\/p>/) // 无残留空段
   expect(html).toContain('<li>第一项</li>')
+})
+
+test('isFullHtmlDoc 识别整页文档 vs 片段', () => {
+  expect(isFullHtmlDoc('<!DOCTYPE html>\n<html><body>x</body></html>')).toBe(true)
+  expect(isFullHtmlDoc('<html lang="zh">...')).toBe(true)
+  expect(isFullHtmlDoc('<h2>片段</h2><p>x</p>')).toBe(false)
+  expect(isFullHtmlDoc('<div class="ql-grid">...</div>')).toBe(false)
+  expect(isFullHtmlDoc('')).toBe(false)
 })
 
 test('普通引用不被误转', () => {
