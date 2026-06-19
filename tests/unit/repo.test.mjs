@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { normalizeRepo, sameRepo, repoSyncPlan } from '../../lib/repo.mjs'
+import { normalizeRepo, sameRepo, repoSyncPlan, shouldTidyRepoHome } from '../../lib/repo.mjs'
 
 test('normalizeRepo 解析各种 GitHub URL', () => {
   expect(normalizeRepo('https://github.com/Alice/Pages.git')).toBe('alice/pages')
@@ -63,4 +63,9 @@ test('repoSyncPlan：origin 缺失但 config 对 → 不 block，仍修 origin',
 test('repoSyncPlan：config 错 + force → 写 config + 设 origin', () => {
   const p = repoSyncPlan({ configRepo: 'alice/old', originUrl: 'https://github.com/alice/old.git', targetRepo: 'alice/pages', isRepo: true, force: true })
   expect(p).toEqual({ block: false, writeConfig: true, setOrigin: true })
+})
+
+test('shouldTidyRepoHome：仅本次新建的 repo 才整理主页（防删用户 main）', () => {
+  expect(shouldTidyRepoHome({ createdNow: true })).toBe(true)   // 新建 → 切默认分支/删空 main
+  expect(shouldTidyRepoHome({ createdNow: false })).toBe(false) // 复用已有 repo → 绝不碰
 })

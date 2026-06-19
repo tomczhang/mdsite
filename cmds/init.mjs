@@ -6,7 +6,7 @@ import {
   setDefaultBranch, deleteBranch, branchExists,
 } from '../lib/gh.mjs'
 import { isRepo, initWorkspace, cloneBranch, commitAll, push, originUrl, setOrigin } from '../lib/git.mjs'
-import { repoSyncPlan } from '../lib/repo.mjs'
+import { repoSyncPlan, shouldTidyRepoHome } from '../lib/repo.mjs'
 import { defaultConfig, writeConfig, readConfig } from '../lib/config.mjs'
 import { renderTemplateTo, varsFromConfig, siteReadme } from '../lib/render.mjs'
 import {
@@ -131,14 +131,13 @@ export async function runInit(args) {
 
   // 9. 仅对【本次新建】的 repo：把 gh-pages 设为默认 + 删掉 auto-init 的空 main。
   //    复用的已有 repo 绝不碰其默认分支/main（那可能是用户的真实代码，删除=数据丢失）。
-  if (createdNow) {
+  if (shouldTidyRepoHome({ createdNow })) {
     try {
       await setDefaultBranch(repo, 'gh-pages')
       if (await branchExists(repo, 'main')) {
         const deleted = await deleteBranch(repo, 'main')
-        logger.dim(deleted
-          ? '已把默认分支切到 gh-pages 并删除空 main'
-          : '默认分支已切到 gh-pages；删除 main 失败（可能权限/分支保护），可手动删除')
+        if (deleted) logger.dim('已把默认分支切到 gh-pages 并删除空 main')
+        else logger.warn('默认分支已切到 gh-pages；删除 main 失败（可能权限/分支保护），可手动删除')
       }
     } catch (e) {
       logger.warn(`设置默认分支失败（不影响部署）：${e.message}`)

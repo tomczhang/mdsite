@@ -12,7 +12,7 @@ CLI SHALL 以 `mdsite <command> [args]` 形式把请求路由到 `init` / `publi
 - **THEN** CLI 打印可用子命令的用法说明，并以非零退出码结束
 
 ### Requirement: 本地 git 工作区
-工具 SHALL 维护一个本地 git 工作区，默认路径 `~/.mdsite`，可由环境变量 `MDSITE_HOME` 覆盖；首次使用时 `init` SHALL 准备该工作区（git 仓库 + `src/` 目录 + 空 `pages.json`）。
+工具 SHALL 维护一个本地 git 工作区，默认路径 `~/.mdsite`，可由环境变量 `MDSITE_HOME` 覆盖；该工作区即 gh-pages 分支工作树、站点在工作区根。首次使用时 `init` SHALL 准备它（git 仓库 + 工作区根的空 `pages.json`）。
 
 #### Scenario: 首次准备工作区
 - **WHEN** 工作区不存在且用户执行 `init`
@@ -56,8 +56,8 @@ CLI SHALL 以 `mdsite <command> [args]` 形式把请求路由到 `init` / `publi
 - **THEN** 无冗余输出，退出码为 0
 
 ### Requirement: 本地预览
-`serve` SHALL 在本地起一个静态服务器伺服工作区的 `src/`，便于发布前肉眼预览产物。
+`serve` SHALL 在本地起一个静态服务器伺服工作区根（站点根），便于发布前肉眼预览产物。
 
 #### Scenario: 启动本地预览
 - **WHEN** 用户执行 `mdsite serve`
-- **THEN** 工作区 `src/` 被静态伺服，用户可在本地浏览器访问首页与报告
+- **THEN** 工作区根被静态伺服，用户可在本地浏览器访问首页与报告
