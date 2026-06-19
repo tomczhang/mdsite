@@ -42,6 +42,13 @@ test('每种 alert 类型映射对应 class', () => {
   expect(mdToHtml('> [!CAUTION]\n> x')).toContain('callout-caution')
 })
 
+test('alert 标记单独成行(后接列表) 不留空 <p>', () => {
+  const html = mdToHtml('> [!WARNING]\n>\n> - 第一项\n> - 第二项')
+  expect(html).toContain('callout-warning')
+  expect(html).not.toMatch(/callout-body">\s*<p>\s*<\/p>/) // 无残留空段
+  expect(html).toContain('<li>第一项</li>')
+})
+
 test('普通引用不被误转', () => {
   const html = mdToHtml('> 普通引用')
   expect(html).toContain('<blockquote>')

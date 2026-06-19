@@ -66,13 +66,15 @@ rm -f "$tmp"
   </div>
   ```
 
-**语义提示块**（按语义定色，别全用普通引用）——用 GitHub 风格：
+**语义提示块**（按语义定色，别全用普通引用）——用 GitHub 风格。**每个提示块各自独立一段、前后留空行；不要把多个 `[!TYPE]` 写进同一个引用块**（否则只有第一个生效，其余变正文）：
 ```markdown
-> [!NOTE] 说明性补充        > [!TIP] 建议/技巧
-> [!IMPORTANT] 关键信息     > [!WARNING] 需注意的坑
-> [!CAUTION] 高风险/警告
+> [!WARNING]
+> 需要注意的坑。
+
+> [!TIP]
+> 一条建议。
 ```
-会渲染成对应颜色+图标的色条 callout。
+可用类型：`[!NOTE]`(蓝·说明) `[!TIP]`(绿·提示) `[!IMPORTANT]`(紫·重点) `[!WARNING]`(黄·注意) `[!CAUTION]`(红·警告)，渲染成对应颜色+图标的色条 callout。
 
 **表格**：技术报告多用表格；表头/斑马纹模板已带。单元格内可用：
 - 行内代码 `` `code` ``、徽章 `<span class="badge badge-green">EXP</span>`（颜色：green/blue/gray/amber）。

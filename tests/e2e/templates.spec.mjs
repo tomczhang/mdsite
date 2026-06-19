@@ -53,7 +53,10 @@ test.beforeAll(async () => {
   const reportTpl = await readFile(path.join(TPL, 'report.html'), 'utf8')
   // 用真实 markdown 渲染（含速览卡 + 语义 callout + 表格），验证整条管线
   const bodyMd = [
-    '<div class="ql-grid"><div class="ql-card"><div class="ql-card-title">卡片A</div><div class="ql-card-body">说明</div></div></div>',
+    '<div class="ql-grid">'
+      + '<div class="ql-card"><div class="ql-card-title">卡A</div><div class="ql-card-body">说明A</div></div>'
+      + '<div class="ql-card"><div class="ql-card-title">卡B</div><div class="ql-card-body">说明B</div></div>'
+      + '<div class="ql-card"><div class="ql-card-title">卡C</div><div class="ql-card-body">说明C</div></div></div>',
     '', // 内嵌 HTML 块后必须空行，否则后续 markdown 被并入 HTML 块
     '## 结论', '这是正文。', '- 要点一', '- 要点二', '',
     '> [!WARNING]', '> 小心这个坑', '',
@@ -93,7 +96,7 @@ test('report 页渲染正文 + 摘要 + 自动大纲', async ({ page }) => {
   await expect(page.locator('.prose-mdsite li')).toHaveCount(2)
   // 语义 callout + 速览卡 + 徽章 都渲染
   await expect(page.locator('.callout-warning')).toBeVisible()
-  await expect(page.locator('.ql-card')).toHaveCount(1)
+  await expect(page.locator('.ql-card')).toHaveCount(3)
   await expect(page.locator('.badge-green')).toHaveText('EXP')
   // 右侧大纲应从正文两个 h2 自动生成
   await expect(page.locator('#outline .outline-link')).toHaveCount(2)

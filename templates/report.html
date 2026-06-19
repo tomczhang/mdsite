@@ -33,6 +33,7 @@
     .prose-mdsite code { background: #f2f3f5; color: #d4380d; padding: .12rem .4rem; border-radius: 4px; font-size: .88em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .prose-mdsite pre { background: #0d1117; color: #e6edf3; padding: 1.1rem 1.3rem; border-radius: 10px; overflow-x: auto; margin: 1.2rem 0; font-size: .9rem; line-height: 1.6; }
     .prose-mdsite pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+    .prose-mdsite kbd { display: inline-block; background: #fafbfc; border: 1px solid #d0d7de; border-bottom-width: 2px; border-radius: 5px; padding: .05rem .4rem; font-size: .82em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #1f2329; line-height: 1.4; }
     .prose-mdsite blockquote { border-left: 3px solid #1677ff; background: #f7f9ff; padding: .6rem 1rem; color: #4e5969; margin: 1.1rem 0; border-radius: 0 6px 6px 0; }
     .prose-mdsite blockquote p { margin: .3rem 0; }
     .prose-mdsite table { border-collapse: collapse; margin: 1.2rem 0; width: 100%; font-size: .92rem; }
@@ -87,13 +88,9 @@
       <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600 transition-colors">&larr; 返回首页</a>
       <div class="flex items-center gap-2">
         <span class="text-xs text-gray-400 mr-1">{{DATE}}</span>
-        <button onclick="mdsite.share()" title="分享链接" aria-label="分享链接"
+        <button onclick="mdsite.copyLink()" title="复制链接" aria-label="复制链接"
                 class="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 6l-4-4-4 4M12 2v13"/></svg>
-        </button>
-        <button onclick="mdsite.copyHTML()" title="复制整页 HTML" aria-label="复制整页 HTML"
-                class="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5"/></svg>
         </button>
       </div>
     </div>
@@ -110,6 +107,12 @@
           <p class="text-[15px] text-gray-600 leading-relaxed">{{SUMMARY}}</p>
         </div>
       </header>
+
+      <!-- 移动端折叠目录（窄屏；桌面用右侧 sticky 大纲） -->
+      <details id="toc-mobile" class="lg:hidden mb-6 border border-gray-100 rounded-lg hidden">
+        <summary class="px-4 py-2.5 text-sm text-gray-500 cursor-pointer select-none">目录</summary>
+        <nav id="outline-mobile" class="px-2 pb-3"></nav>
+      </details>
 
       <article id="article" class="prose-mdsite">
         {{BODY}}
@@ -131,22 +134,29 @@
   </div>
 
   <script>
-    // 从正文标题(h2/h3)自动生成右侧大纲 + 滚动高亮，适配任意 Markdown
+    // 从正文标题(h2/h3)自动生成大纲(桌面右侧 + 移动端折叠) + 滚动高亮，适配任意 Markdown
     (function () {
       const article = document.getElementById('article');
       const outline = document.getElementById('outline');
+      const outlineM = document.getElementById('outline-mobile');
       if (!article || !outline) return;
       const heads = article.querySelectorAll('h2, h3');
       if (!heads.length) return;
       document.getElementById('outline-title').classList.remove('hidden');
+      const tocM = document.getElementById('toc-mobile');
+      if (tocM) tocM.classList.remove('hidden'); // 有标题才显示移动端目录
       const slug = (t, i) => (t.toLowerCase().replace(/[^\w一-龥]+/g, '-').replace(/^-+|-+$/g, '') || 'sec') + '-' + i;
       heads.forEach((h, i) => {
         if (!h.id) h.id = slug(h.textContent, i);
-        const a = document.createElement('a');
-        a.href = '#' + h.id;
-        a.textContent = h.textContent;
-        a.className = 'outline-link' + (h.tagName === 'H3' ? ' lvl-3' : '');
-        outline.appendChild(a);
+        const cls = 'outline-link' + (h.tagName === 'H3' ? ' lvl-3' : '');
+        [outline, outlineM].forEach((box) => {
+          if (!box) return;
+          const a = document.createElement('a');
+          a.href = '#' + h.id;
+          a.textContent = h.textContent;
+          a.className = cls;
+          box.appendChild(a);
+        });
       });
       const links = outline.querySelectorAll('.outline-link');
       const obs = new IntersectionObserver((entries) => {
@@ -161,15 +171,11 @@
       heads.forEach((h) => obs.observe(h));
     })();
 
-    // 分享 / 复制整页 HTML + toast
+    // 复制当前页面链接 + toast
     window.mdsite = {
-      async share() {
-        const url = location.href, title = document.title;
-        if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
-        try { await navigator.clipboard.writeText(url); mdsite.toast('链接已复制'); } catch (e) { mdsite.toast('复制失败'); }
-      },
-      async copyHTML() {
-        try { await navigator.clipboard.writeText(document.documentElement.outerHTML); mdsite.toast('整页 HTML 已复制'); } catch (e) { mdsite.toast('复制失败'); }
+      async copyLink() {
+        try { await navigator.clipboard.writeText(location.href); mdsite.toast('链接已复制'); }
+        catch (e) { mdsite.toast('复制失败'); }
       },
       toast(msg) {
         const el = document.createElement('div');
