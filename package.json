@@ -1,0 +1,34 @@
+{
+  "name": "mdlink",
+  "version": "0.1.0",
+  "description": "把 Markdown / 对话内容一键转换成云端可分享的精美 HTML 页面，部署到你自己的 GitHub Pages（BYO-host）",
+  "type": "module",
+  "bin": {
+    "mdlink": "bin/mdlink.mjs"
+  },
+  "files": [
+    "bin",
+    "cmds",
+    "lib",
+    "templates",
+    "skill",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "marked": "^12.0.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

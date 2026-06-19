@@ -16,7 +16,7 @@ CLI SHALL 以 `mdlink <command> [args]` 形式把请求路由到 `init` / `publi
 
 #### Scenario: 首次准备工作区
 - **WHEN** 工作区不存在且用户执行 `init`
-- **THEN** 在 `MDLINK_HOME`（默认 `~/.mdlink`）创建 git 工作区，含 `src/` 目录与初始化为 `[]` 的 `src/pages.json`
+- **THEN** 在 `MDLINK_HOME`（默认 `~/.mdlink`）创建 git 工作区（站点在工作区根 = gh-pages 分支根），含初始化为 `[]` 的根 `pages.json`，并用 `.gitignore` 把 `mdlink.yml`/`templates/`/`.cache/` 排除出站点
 
 #### Scenario: 复用已存在工作区
 - **WHEN** 工作区已是 git 仓库且用户再次执行 `init`

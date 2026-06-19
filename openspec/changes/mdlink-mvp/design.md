@@ -22,7 +22,7 @@ mdlink 是对内部 `@ali/aper-pages` 的 clean-room 重写：把「Markdown/对
 GitHub Pages 分支部署只能伺服**仓库根**或 `/docs`，不支持 `/src`。
 - 选 **gh-pages 分支 + 内容放分支根**：本地工作区 `src/` 布局不变、`main` 分支保持干净、零 CI workflow。
 - 备选 (a) 本地 src→docs：改动本地布局；(c) GitHub Actions deploy-pages：可部署任意目录但引入 CI 文件、更重。
-- 实现：publish 把工作区 `src/` 的内容映射到 gh-pages 分支根（push 时以 `src/` 为 worktree 根，或用 `git subtree`/独立 worktree 推 `src/` 子树到 `gh-pages`）。`init` 用 GitHub API/`gh` 把 Pages source 设为 `gh-pages` 分支。
+- 实现（落地选择）：**~/.mdlink 工作树本身 = gh-pages 分支、站点在工作区根**，`mdlink.yml`/`templates/`/`.cache/` 用 `.gitignore` 排除出站点。比"推 src/ 子树到分支根"的 worktree 方案更简单可靠，且天然满足 Pages 分支根服务。`init` 用 GitHub REST 把 Pages source 设为 `gh-pages` 分支根。
 - **覆盖保护（@Reviewer）**：复用已存在 repo 且其 `gh-pages` 已有内容时，写入前先探测 mdlink 标记（分支根的 `pages.json`/mdlink 生成的 `index.html`）。非 mdlink 站点 → BLOCK 报错，需 `--force` 或单独 import 才覆盖，避免抹掉用户既有 Pages 站点。
 
 ### D2. 认证走 token-HTTPS，不用 SSH；token 绝不持久化（@Reviewer 强化）

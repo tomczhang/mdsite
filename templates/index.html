@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{SITE_TITLE}}</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='72' text-anchor='middle' font-size='80'>🗂️</text></svg>">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js" defer></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!--
+    时间轴首页。运行时 fetch ./pages.json（相对路径，适配 project-pages /<repo>/ base）。
+    折叠阈值在【浏览时】按 Date.now() 计算：> 30 天的报告默认折叠在「更早」区。
+    数据仅来自本站点自己的 pages.json —— per-user 去中心，无任何跨用户来源。
+  -->
+  <div x-data="indexApp()" x-init="load()" class="max-w-3xl mx-auto px-6 py-12">
+    <header class="mb-10">
+      <h1 class="text-3xl font-bold text-gray-900">{{SITE_TITLE}}</h1>
+      <p class="mt-2 text-gray-500">{{SITE_TAGLINE}}</p>
+    </header>
+
+    <template x-if="loaded && entries.length === 0">
+      <p class="text-gray-400">还没有报告。用 <code class="bg-gray-100 px-1.5 py-0.5 rounded">mdlink publish</code> 发布第一篇吧。</p>
+    </template>
+
+    <!-- 近 30 天（默认展开） -->
+    <ul class="space-y-3">
+      <template x-for="e in recent" :key="e.filename">
+        <li>
+          <a :href="e.filename"
+             class="block bg-white rounded-lg border border-gray-100 px-5 py-4 hover:border-blue-300 hover:shadow-sm transition">
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="font-medium text-gray-900" x-text="e.title"></span>
+              <span class="text-xs text-gray-400 shrink-0" x-text="e.date"></span>
+            </div>
+            <div class="mt-1 flex items-center gap-2">
+              <span class="text-[11px] uppercase tracking-wide text-blue-600" x-text="e.category"></span>
+              <span class="text-sm text-gray-500 truncate" x-text="e.summary"></span>
+            </div>
+          </a>
+        </li>
+      </template>
+    </ul>
+
+    <!-- 超 30 天：默认折叠，可展开 -->
+    <div x-show="older.length > 0" class="mt-8">
+      <button @click="showOld = !showOld"
+              class="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1">
+        <span x-text="showOld ? '收起更早的报告' : ('显示更早的报告 (' + older.length + ')')"></span>
+      </button>
+      <ul x-show="showOld" x-cloak class="space-y-3 mt-4 opacity-90">
+        <template x-for="e in older" :key="e.filename">
+          <li>
+            <a :href="e.filename"
+               class="block bg-white rounded-lg border border-gray-100 px-5 py-4 hover:border-blue-300 transition">
+              <div class="flex items-baseline justify-between gap-3">
+                <span class="font-medium text-gray-700" x-text="e.title"></span>
+                <span class="text-xs text-gray-400 shrink-0" x-text="e.date"></span>
+              </div>
+              <div class="mt-1 flex items-center gap-2">
+                <span class="text-[11px] uppercase tracking-wide text-blue-500" x-text="e.category"></span>
+                <span class="text-sm text-gray-400 truncate" x-text="e.summary"></span>
+              </div>
+            </a>
+          </li>
+        </template>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function indexApp() {
+      return {
+        entries: [], loaded: false, showOld: false,
+        async load() {
+          try {
+            const res = await fetch('./pages.json', { cache: 'no-store' });
+            this.entries = await res.json();
+          } catch (e) { this.entries = []; }
+          // 倒序（最新在前）
+          this.entries.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+          this.loaded = true;
+        },
+        // 折叠阈值在浏览时按当前日期计算，不在发布时固化
+        get cutoff() { return Date.now() - 30 * 24 * 60 * 60 * 1000; },
+        isOld(e) {
+          const t = Date.parse(e.date);
+          return !isNaN(t) && t < this.cutoff;
+        },
+        get recent() { return this.entries.filter(e => !this.isOld(e)); },
+        get older() { return this.entries.filter(e => this.isOld(e)); },
+      };
+    }
+  </script>
+  <style>[x-cloak]{display:none!important}</style>
+</body>
+</html>

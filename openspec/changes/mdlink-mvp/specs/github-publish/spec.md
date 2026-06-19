@@ -53,7 +53,7 @@
 - **THEN** 操作以明确的凭证缺失错误失败，不静默挂起
 
 ### Requirement: publish 归档并发布
-`publish` SHALL 把渲染好的页面归档进本地工作区（`src/<category>/<YYYY-MM-DD>/<slug>.html`）、commit、push 到用户 `gh-pages`，使其经 GitHub Pages 对外可达；`category` SHALL 限定为 kebab-case。
+`publish` SHALL 把渲染好的页面归档进本地工作区（站点根下 `<category>/<YYYY-MM-DD>/<slug>.html`，即 gh-pages 分支根）、commit、push 到用户 `gh-pages`，使其经 GitHub Pages 对外可达；`category` SHALL 限定为 kebab-case。
 
 #### Scenario: 一条命令出链接
 - **WHEN** 用户执行 `mdlink publish <input> --title T --category report --summary S`
