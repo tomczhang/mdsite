@@ -52,7 +52,9 @@ test.beforeAll(async () => {
   const reportTpl = await readFile(path.join(TPL, 'report.html'), 'utf8')
   const reportHtml = applyVars(reportTpl, {
     TITLE: '近期报告', DATE: daysAgo(1), CATEGORY: 'report', SUMMARY: '这是一句摘要。',
-    BODY: '<h2>结论</h2><p>这是正文。</p><ul><li>要点一</li><li>要点二</li></ul><h2>背景</h2><p>背景说明。</p>',
+    BODY: '<h2>结论</h2><p>这是正文。</p><ul><li>要点一</li><li>要点二</li></ul>'
+      + '<div style="height:1500px"></div>'
+      + '<h2>背景</h2><p>背景说明。</p><div style="height:800px"></div>',
     SITE_TITLE: 'Test Pages', ROOT: '../../',
   })
   await writeFile(path.join(OUT, recentFile), reportHtml, 'utf8')
@@ -84,6 +86,13 @@ test('report 页渲染正文 + 摘要 + 自动大纲', async ({ page }) => {
   // 右侧大纲应从正文两个 h2 自动生成
   await expect(page.locator('#outline .outline-link')).toHaveCount(2)
   await page.screenshot({ path: path.join(SHOTS, 'report.png'), fullPage: true })
+  // 滚动到第二个标题（放到视口顶部 ~15% 的高亮判定带内）→ 大纲对应项高亮（scroll-spy）
+  await page.evaluate(() => {
+    const h = document.querySelectorAll('.prose-mdsite h2')[1]
+    const y = h.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.15
+    window.scrollTo(0, y)
+  })
+  await expect(page.locator('#outline .outline-link', { hasText: '背景' })).toHaveClass(/active/)
 })
 
 test('index 时间轴：旧报告默认折叠、可展开', async ({ page }) => {
