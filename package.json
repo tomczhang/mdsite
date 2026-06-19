@@ -1,5 +1,5 @@
 {
-  "name": "mdsite",
+  "name": "@tomczhang/mdsite",
   "version": "0.1.0",
   "description": "把 Markdown / 对话内容一键转换成云端可分享的精美 HTML 页面，部署到你自己的 GitHub Pages（BYO-host）",
   "type": "module",

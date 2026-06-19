@@ -9,12 +9,12 @@
 
 ## 安装
 
-npm 包名为 `mdsite`，命令也是 `mdsite`。
+npm 包名为 `@tomczhang/mdsite`（scoped；无前缀的 `mdsite` 被 npm 判定与既有包 `md_site` 重名而占不到），安装后命令仍是 `mdsite`。
 
 发布后：
 
 ```bash
-npm i -g mdsite     # 或 npx mdsite <command>
+npm i -g @tomczhang/mdsite     # 或 npx @tomczhang/mdsite <command>
 mdsite --help
 ```
 
