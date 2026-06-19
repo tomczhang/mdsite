@@ -9,7 +9,16 @@
 
 ## 安装
 
-尚未发布到 npm，目前从源码安装：
+npm 包名为 `@tomczhang/mdlink`（scoped），安装后命令是 `mdlink`。
+
+发布后：
+
+```bash
+npm i -g @tomczhang/mdlink     # 或 npx @tomczhang/mdlink <command>
+mdlink --help
+```
+
+当前从源码安装：
 
 ```bash
 git clone <this-repo> mdlink && cd mdlink
@@ -19,7 +28,6 @@ mdlink --help
 ```
 
 不想全局安装也可直接跑：`node /path/to/mdlink/bin/mdlink.mjs <command>`。
-（发布到 npm 后可改用 `npm i -g mdlink` / `npx mdlink`。）
 
 ## 认证（只需一次，推荐用最小权限）
 
