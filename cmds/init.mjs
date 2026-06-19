@@ -3,7 +3,7 @@ import { writeFile, mkdir, access } from 'node:fs/promises'
 import path from 'node:path'
 import { whoami, repoView, repoCreate, enablePages, ghPagesState, SITE_MARKER } from '../lib/gh.mjs'
 import { isRepo, initWorkspace, cloneBranch, commitAll, push, originUrl, setOrigin } from '../lib/git.mjs'
-import { normalizeRepo, sameRepo } from '../lib/repo.mjs'
+import { repoSyncPlan } from '../lib/repo.mjs'
 import { defaultConfig, writeConfig, readConfig } from '../lib/config.mjs'
 import { renderTemplateTo, varsFromConfig } from '../lib/render.mjs'
 import {
@@ -36,22 +36,24 @@ export async function runInit(args) {
   }
   logger.step(`目标仓库：${repo}`)
 
-  // 2b. 本地工作区已指向别的 repo → BLOCK（避免发布到旧仓库）。
-  //     用精确解析比对，不用 substring（避免 alice/pages-old≈alice/pages 误判）。
-  if (await isRepo(MDLINK_HOME)) {
-    const existingCfg = await readConfig()
-    const localRepo = existingCfg?.remote?.repo
-    const localOrigin = await originUrl(MDLINK_HOME)
-    const mismatch =
-      (localRepo && !sameRepo(localRepo, repo)) ||
-      (normalizeRepo(localOrigin) && !sameRepo(localOrigin, repo))
-    if (mismatch && !force) {
-      logger.error(
-        `本地工作区 ${MDLINK_HOME} 已绑定别的仓库（config: ${localRepo || '?'}，origin: ${localOrigin || '?'}）。\n` +
-        `  想切到 ${repo}：用 --force（会改写本地 config/origin 指向新仓库），或换一个 MDLINK_HOME。`,
-      )
-      return 2
-    }
+  // 2b. 本地 config/origin 与目标 repo 一致性（精确解析，不用 substring）。
+  //     算一次 plan，复用于 BLOCK 判定 + 后续 config/origin 修复。
+  const localIsRepo = await isRepo(MDLINK_HOME)
+  const prevCfg = await readConfig()
+  const localOrigin = localIsRepo ? await originUrl(MDLINK_HOME) : ''
+  const plan = repoSyncPlan({
+    configRepo: prevCfg?.remote?.repo,
+    originUrl: localOrigin,
+    targetRepo: repo,
+    isRepo: localIsRepo,
+    force,
+  })
+  if (plan.block) {
+    logger.error(
+      `本地工作区 ${MDLINK_HOME} 已绑定别的仓库（config: ${prevCfg?.remote?.repo || '无'}，origin: ${localOrigin || '无'}）。\n` +
+      `  想切到 ${repo}：加 --force（会改写本地 config/origin 指向新仓库），或换一个 MDLINK_HOME。`,
+    )
+    return 2
   }
 
   // 3. 建 / 复用 repo
@@ -78,7 +80,7 @@ export async function runInit(args) {
   }
 
   // 5. 本地工作区
-  if (await isRepo(MDLINK_HOME)) {
+  if (localIsRepo) {
     logger.dim(`复用本地工作区：${MDLINK_HOME}`)
   } else if (state === 'mdlink') {
     logger.step(`clone 已有 mdlink 站点到 ${MDLINK_HOME}`)
@@ -88,12 +90,14 @@ export async function runInit(args) {
     await initWorkspace(MDLINK_HOME, repo, 'gh-pages')
   }
 
-  // 6. 让 config/origin 权威指向本次 repo（force 切仓时会改写旧值）
-  const prevCfg = await readConfig()
-  if (!prevCfg || prevCfg.remote?.repo !== repo) {
+  // 6. 让 config/origin 权威指向本次 repo（按 plan 修复：config 对但 origin 错也会被修）
+  if (plan.writeConfig) {
     await writeConfig(defaultConfig({ account, repo }))
-    await setOrigin(MDLINK_HOME, repo)
     logger.ok(`已写入 mdlink.yml（repo=${repo}）`)
+  }
+  if (plan.setOrigin) {
+    await setOrigin(MDLINK_HOME, repo)
+    logger.ok(`origin → ${repo}`)
   }
   await mkdir(TEMPLATE_DIR_LOCAL, { recursive: true })
   const cfg = await readConfig()

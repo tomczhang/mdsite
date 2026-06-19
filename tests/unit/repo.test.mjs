@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { normalizeRepo, sameRepo } from '../../lib/repo.mjs'
+import { normalizeRepo, sameRepo, repoSyncPlan } from '../../lib/repo.mjs'
 
 test('normalizeRepo 解析各种 GitHub URL', () => {
   expect(normalizeRepo('https://github.com/Alice/Pages.git')).toBe('alice/pages')
@@ -26,4 +26,41 @@ test('sameRepo 精确比对，不被相似名误判（修 substring bug）', () 
 
 test('sameRepo 任一侧无法解析 → false（保守）', () => {
   expect(sameRepo('file:///tmp/o.git', 'alice/pages')).toBe(false)
+})
+
+const G = 'https://github.com/alice/pages.git'
+
+test('repoSyncPlan：全新工作区 → 写 config + 设 origin', () => {
+  const p = repoSyncPlan({ configRepo: null, originUrl: '', targetRepo: 'alice/pages', isRepo: false, force: false })
+  expect(p).toEqual({ block: false, writeConfig: true, setOrigin: true })
+})
+
+test('repoSyncPlan：已正确初始化 → no-op（保留 config）', () => {
+  const p = repoSyncPlan({ configRepo: 'alice/pages', originUrl: G, targetRepo: 'alice/pages', isRepo: true, force: false })
+  expect(p).toEqual({ block: false, writeConfig: false, setOrigin: false })
+})
+
+test('repoSyncPlan：config 对但 origin 错，无 force → BLOCK', () => {
+  const p = repoSyncPlan({ configRepo: 'alice/pages', originUrl: 'https://github.com/alice/pages-old.git', targetRepo: 'alice/pages', isRepo: true, force: false })
+  expect(p.block).toBe(true)
+})
+
+test('repoSyncPlan：config 对但 origin 错 + force → 真正修 origin（recovery 关键）', () => {
+  const p = repoSyncPlan({ configRepo: 'alice/pages', originUrl: 'https://github.com/alice/pages-old.git', targetRepo: 'alice/pages', isRepo: true, force: true })
+  expect(p).toEqual({ block: false, writeConfig: false, setOrigin: true })
+})
+
+test('repoSyncPlan：origin 不可解析(file://) 无 force → BLOCK', () => {
+  const p = repoSyncPlan({ configRepo: 'alice/pages', originUrl: 'file:///tmp/o.git', targetRepo: 'alice/pages', isRepo: true, force: false })
+  expect(p.block).toBe(true)
+})
+
+test('repoSyncPlan：origin 缺失但 config 对 → 不 block，仍修 origin', () => {
+  const p = repoSyncPlan({ configRepo: 'alice/pages', originUrl: '', targetRepo: 'alice/pages', isRepo: true, force: false })
+  expect(p).toEqual({ block: false, writeConfig: false, setOrigin: true })
+})
+
+test('repoSyncPlan：config 错 + force → 写 config + 设 origin', () => {
+  const p = repoSyncPlan({ configRepo: 'alice/old', originUrl: 'https://github.com/alice/old.git', targetRepo: 'alice/pages', isRepo: true, force: true })
+  expect(p).toEqual({ block: false, writeConfig: true, setOrigin: true })
 })
