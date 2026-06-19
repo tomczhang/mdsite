@@ -1,8 +1,8 @@
 // init：在【你自己的】GitHub 建/复用 repo + 准备本地工作区 + 开 gh-pages Pages + 铺首页。
 import { writeFile, mkdir, access } from 'node:fs/promises'
 import path from 'node:path'
-import { whoami, repoView, repoCreate, enablePages, ghPagesState } from '../lib/gh.mjs'
-import { isRepo, initWorkspace, cloneBranch, commitAll, push } from '../lib/git.mjs'
+import { whoami, repoView, repoCreate, enablePages, ghPagesState, SITE_MARKER } from '../lib/gh.mjs'
+import { isRepo, initWorkspace, cloneBranch, commitAll, push, originUrl, setOrigin } from '../lib/git.mjs'
 import { defaultConfig, writeConfig, readConfig } from '../lib/config.mjs'
 import { renderTemplateTo, varsFromConfig } from '../lib/render.mjs'
 import {
@@ -25,7 +25,32 @@ export async function runInit(args) {
   const repo = args.flags.repo || `${account}/pages`
   const [group, name] = repo.split('/')
   if (!group || !name) { logger.error(`仓库格式应为 user/name，得到：${repo}`); return 2 }
+  // MVP 只支持当前用户名下的 repo（repoCreate 永远建在 /user/repos）
+  if (group.toLowerCase() !== account.toLowerCase()) {
+    logger.error(
+      `MVP 只支持你自己账号下的仓库。--repo 的 owner 应是 ${account}，收到：${group}。\n` +
+      `  （org 仓库暂未支持）`,
+    )
+    return 2
+  }
   logger.step(`目标仓库：${repo}`)
+
+  // 2b. 本地工作区已指向别的 repo → BLOCK（避免发布到旧仓库）
+  if (await isRepo(MDLINK_HOME)) {
+    const existingCfg = await readConfig()
+    const localRepo = existingCfg?.remote?.repo
+    const localOrigin = await originUrl(MDLINK_HOME)
+    const mismatch =
+      (localRepo && localRepo !== repo) ||
+      (localOrigin && !localOrigin.includes(`${repo}.git`) && !localOrigin.includes(`/${repo}`))
+    if (mismatch && !force) {
+      logger.error(
+        `本地工作区 ${MDLINK_HOME} 已绑定别的仓库（config: ${localRepo || '?'}，origin: ${localOrigin || '?'}）。\n` +
+        `  想切到 ${repo}：用 --force（会改写本地 config/origin 指向新仓库），或换一个 MDLINK_HOME。`,
+      )
+      return 2
+    }
+  }
 
   // 3. 建 / 复用 repo
   const existing = await repoView(repo)
@@ -39,12 +64,15 @@ export async function runInit(args) {
 
   // 4. 覆盖保护：已存在非 mdlink 的 gh-pages 站点 → BLOCK（除非 --force）
   const state = await ghPagesState(repo, 'gh-pages')
-  if (state === 'foreign' && !force) {
-    logger.error(
-      `${repo} 的 gh-pages 分支已有内容，但不是 mdlink 管理的站点。\n` +
-      `  继续会覆盖现有站点。确认要覆盖请加 --force，或换一个 repo（--repo user/other）。`,
-    )
-    return 2
+  if (state === 'foreign') {
+    if (!force) {
+      logger.error(
+        `${repo} 的 gh-pages 分支已有内容，但不是 mdlink 管理的站点。\n` +
+        `  继续会覆盖现有站点。确认要覆盖请加 --force，或换一个 repo（--repo user/other）。`,
+      )
+      return 2
+    }
+    logger.warn(`⚠️ --force：将覆盖 ${repo} 上已有的【非 mdlink】gh-pages 站点`)
   }
 
   // 5. 本地工作区
@@ -58,16 +86,23 @@ export async function runInit(args) {
     await initWorkspace(MDLINK_HOME, repo, 'gh-pages')
   }
 
-  // 6. 写配置 + 基础站点文件
-  if (!(await exists(path.join(MDLINK_HOME, 'mdlink.yml')))) {
+  // 6. 让 config/origin 权威指向本次 repo（force 切仓时会改写旧值）
+  const prevCfg = await readConfig()
+  if (!prevCfg || prevCfg.remote?.repo !== repo) {
     await writeConfig(defaultConfig({ account, repo }))
-    logger.ok('已写入 mdlink.yml')
+    await setOrigin(MDLINK_HOME, repo)
+    logger.ok(`已写入 mdlink.yml（repo=${repo}）`)
   }
   await mkdir(TEMPLATE_DIR_LOCAL, { recursive: true })
   const cfg = await readConfig()
   if (!(await exists(PAGES_JSON))) {
     await writeFile(PAGES_JSON, '[]\n', 'utf8')
   }
+  // 写 mdlink 站点标记（覆盖保护探测依据）
+  await writeFile(path.join(MDLINK_HOME, SITE_MARKER),
+    JSON.stringify({ tool: 'mdlink', repo }, null, 2) + '\n', 'utf8')
+  // 关掉 Jekyll：纯静态自包含 HTML，避免 Jekyll 忽略点文件/改写产物
+  await writeFile(path.join(MDLINK_HOME, '.nojekyll'), '', 'utf8')
   await renderTemplateTo('index.html', INDEX_HTML, varsFromConfig(cfg))
   logger.ok('已铺设首页 index.html')
 

@@ -1,5 +1,8 @@
 import { test, expect } from 'vitest'
-import { mergePagesJson } from '../../lib/pages-json.mjs'
+import { mkdtemp, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { mergePagesJson, readPagesJson } from '../../lib/pages-json.mjs'
 
 const e = (filename, date) => ({ filename, title: filename, category: 'report', date, summary: '' })
 
@@ -27,4 +30,24 @@ test('同 filename 视为同条目去重', () => {
   const a = [e('r/d/same.html', '2026-06-01')]
   const b = [e('r/d/same.html', '2026-06-01')]
   expect(mergePagesJson(a, b)).toHaveLength(1)
+})
+
+test('readPagesJson：文件不存在 → []', async () => {
+  expect(await readPagesJson('/no/such/pages.json')).toEqual([])
+})
+
+test('readPagesJson：损坏的 JSON → 抛错（不静默丢索引）', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'mdlink-pj-'))
+  const f = path.join(dir, 'pages.json')
+  await writeFile(f, '{ not valid json', 'utf8')
+  await expect(readPagesJson(f)).rejects.toThrow(/解析失败/)
+  await rm(dir, { recursive: true, force: true })
+})
+
+test('readPagesJson：非数组 → 抛错', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'mdlink-pj-'))
+  const f = path.join(dir, 'pages.json')
+  await writeFile(f, '{"a":1}', 'utf8')
+  await expect(readPagesJson(f)).rejects.toThrow(/格式错误/)
+  await rm(dir, { recursive: true, force: true })
 })

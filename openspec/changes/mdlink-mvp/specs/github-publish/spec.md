@@ -12,14 +12,14 @@
 - **THEN** 复用之、确保 Pages 已启用，且不覆盖仓库原有内容
 
 ### Requirement: 不覆盖非 mdlink 管理的已有 gh-pages 站点
-当目标 repo 已存在一个 `gh-pages` 分支/站点时，工具 SHALL 在写入前判定它是否由 mdlink 管理（存在 mdlink 标记：如分支根的 `pages.json` + mdlink 生成的 `index.html`/标记文件）。**仅当确认是 mdlink 管理的站点时**才继续发布；否则 SHALL 以明确错误 BLOCK，并要求用户显式 `--force`（或独立的 import 流程）后才覆盖。
+当目标 repo 已存在一个 `gh-pages` 分支/站点时，工具 SHALL 在写入前判定它是否由 mdlink 管理——依据是分支根存在**专用标记文件 `.mdlink-site.json`**（不能仅凭 `pages.json`，以免无关站点恰好有同名文件被误判）。**仅当确认是 mdlink 管理的站点时**才继续发布；否则 SHALL 以明确错误 BLOCK，并要求用户显式 `--force`（或独立的 import 流程）后才覆盖。
 
 #### Scenario: 已存在的非 mdlink 站点被保护
-- **WHEN** 目标 repo 的 `gh-pages` 分支存在内容但缺少 mdlink 标记（无 mdlink 的 `pages.json`/标记）
+- **WHEN** 目标 repo 的 `gh-pages` 分支存在内容但缺少 `.mdlink-site.json` 标记（即便它恰好有 `pages.json`）
 - **THEN** 工具拒绝写入、以清晰错误退出，提示这会覆盖既有站点，需 `--force` 或单独 import 才能继续
 
 #### Scenario: mdlink 管理的站点正常续写
-- **WHEN** 目标 `gh-pages` 含 mdlink 标记（mdlink 的 `pages.json` 等）
+- **WHEN** 目标 `gh-pages` 含 `.mdlink-site.json` 标记
 - **THEN** 工具识别为自己管理的站点，正常追加发布、合并 `pages.json`，不需 `--force`
 
 #### Scenario: 显式 force 覆盖

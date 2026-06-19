@@ -7,7 +7,7 @@ import { renderTemplate, renderTemplateTo, varsFromConfig, siteTitleOf } from '.
 import { makeFilename } from '../lib/slug.mjs'
 import { readPagesJson, writePagesJson } from '../lib/pages-json.mjs'
 import { pageUrlOf } from '../lib/url.mjs'
-import { ghPagesState } from '../lib/gh.mjs'
+import { ghPagesState, SITE_MARKER } from '../lib/gh.mjs'
 import {
   commitAll, push, fetchRemote, commitsBehind, rebaseFromRemote,
 } from '../lib/git.mjs'
@@ -40,9 +40,12 @@ export async function runPublish(args) {
 
   // 覆盖保护：远端 gh-pages 若变成非 mdlink 站点则拦截
   const state = await ghPagesState(cfg.remote.repo, 'gh-pages')
-  if (state === 'foreign' && !force) {
-    logger.error(`${cfg.remote.repo} 的 gh-pages 不是 mdlink 站点，发布会覆盖；确认请加 --force`)
-    return 2
+  if (state === 'foreign') {
+    if (!force) {
+      logger.error(`${cfg.remote.repo} 的 gh-pages 不是 mdlink 站点，发布会覆盖；确认请加 --force`)
+      return 2
+    }
+    logger.warn(`⚠️ --force：正在向【非 mdlink】gh-pages 站点 ${cfg.remote.repo} 发布（会覆盖既有内容）`)
   }
 
   // 多设备同步：拉远端最新（pages.json 冲突自动语义合并）
@@ -53,12 +56,20 @@ export async function runPublish(args) {
   const isHtml = /\.html?$/i.test(input)
   const body = isHtml ? raw : mdToHtml(raw)
 
-  // 路径：<category>/<YYYY-MM-DD>/<slug>.html
+  // 路径：<category>/<YYYY-MM-DD>/<slug>.html。
+  // 唯一性：生成后检测 absPath 与已有 pages.json filename，碰撞则换 hash 重试。
   const now = new Date()
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const filename = makeFilename({ title, now, strategy: cfg.storage?.slug_strategy })
-  const relPath = `${category}/${date}/${filename}`
-  const absPath = path.join(MDLINK_HOME, relPath)
+  const pages = await readPagesJson(PAGES_JSON)
+  const taken = new Set(pages.map((p) => p.filename))
+  let filename, relPath, absPath
+  for (let attempt = 0; ; attempt++) {
+    filename = makeFilename({ title, now, strategy: cfg.storage?.slug_strategy })
+    relPath = `${category}/${date}/${filename}`
+    absPath = path.join(MDLINK_HOME, relPath)
+    if (!taken.has(relPath) && !(await exists(absPath))) break
+    if (attempt >= 10) { logger.error('生成唯一文件名失败（连续碰撞），请重试'); return 1 }
+  }
   const root = '../'.repeat(relPath.split('/').length - 1) // 报告页回根的相对前缀
 
   const repoName = String(cfg.remote.repo).split('/')[1] || 'pages'
@@ -74,10 +85,15 @@ export async function runPublish(args) {
   await writeFile(absPath, html, 'utf8')
   logger.ok(`已生成 ${relPath}`)
 
-  // 更新索引（最新在前）
-  const pages = await readPagesJson(PAGES_JSON)
+  // 更新索引（最新在前）。filename 即站点根的相对 URL。
   pages.unshift({ filename: relPath, title, category, date, summary })
   await writePagesJson(pages, PAGES_JSON)
+
+  // 确保 mdlink 站点标记存在（覆盖保护依据）
+  const markerPath = path.join(MDLINK_HOME, SITE_MARKER)
+  if (!(await exists(markerPath))) {
+    await writeFile(markerPath, JSON.stringify({ tool: 'mdlink', repo: cfg.remote.repo }, null, 2) + '\n', 'utf8')
+  }
 
   // 重渲首页
   await renderTemplateTo('index.html', INDEX_HTML, varsFromConfig(cfg))

@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url'
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
 const TPL = path.join(ROOT, 'templates')
 const OUT = path.join(os.tmpdir(), 'mdlink-e2e-site')
+// 截图产物留存在 repo 内，供 review 回看
+const SHOTS = path.join(ROOT, 'test-results', 'mdlink')
 
 function applyVars(content, vars) {
   return String(content).replace(/\{\{(\w+)\}\}/g, (_, k) =>
@@ -29,6 +31,7 @@ const daysAgo = (n) => {
 
 test.beforeAll(async () => {
   await rm(OUT, { recursive: true, force: true })
+  await mkdir(SHOTS, { recursive: true })
   await mkdir(path.join(OUT, 'report', daysAgo(1)), { recursive: true })
   await mkdir(path.join(OUT, 'report', daysAgo(60)), { recursive: true })
 
@@ -77,7 +80,7 @@ test('report 页渲染正文', async ({ page }) => {
   await expect(page.locator('h1')).toHaveText('近期报告')
   await expect(page.locator('.prose-mdlink h2')).toHaveText('结论')
   await expect(page.locator('.prose-mdlink li')).toHaveCount(2)
-  await page.screenshot({ path: path.join(OUT, 'shot-report.png'), fullPage: true })
+  await page.screenshot({ path: path.join(SHOTS, 'report.png'), fullPage: true })
 })
 
 test('index 时间轴：旧报告默认折叠、可展开', async ({ page }) => {
@@ -89,9 +92,9 @@ test('index 时间轴：旧报告默认折叠、可展开', async ({ page }) => 
   // 折叠区有展开按钮
   const toggle = page.getByRole('button', { name: /显示更早的报告/ })
   await expect(toggle).toBeVisible()
-  await page.screenshot({ path: path.join(OUT, 'shot-index-folded.png'), fullPage: true })
+  await page.screenshot({ path: path.join(SHOTS, 'index-folded.png'), fullPage: true })
   // 展开后可见
   await toggle.click()
   await expect(page.getByText('陈年报告')).toBeVisible()
-  await page.screenshot({ path: path.join(OUT, 'shot-index-expanded.png'), fullPage: true })
+  await page.screenshot({ path: path.join(SHOTS, 'index-expanded.png'), fullPage: true })
 })

@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: 用户报告时间轴首页
-站点根 `<user>.github.io/<repo>/index.html` SHALL 渲染当前用户已发布报告的**倒序（最新在前）时间轴**，数据来自本地 `pages.json`。每条至少含：标题、分类、发布日期、URL、摘要。
+站点根 `<user>.github.io/<repo>/index.html` SHALL 渲染当前用户已发布报告的**倒序（最新在前）时间轴**，数据来自本地 `pages.json`。每条至少含：标题、分类、发布日期、URL、摘要。其中 **URL 以 `filename` 字段表示**——它是相对站点根的路径（如 `report/2026-06-19/1130-ab12ef.html`），首页直接用作相对链接、报告页用 `pageUrlOf` 拼成完整 URL。
 
 #### Scenario: 发布后进索引
 - **WHEN** 一篇报告被 publish
-- **THEN** 一条记录（标题/分类/日期/url/摘要）被 prepend 进 `pages.json`，部署后体现在首页时间轴最前
+- **THEN** 一条记录（标题/分类/日期/`filename` 相对 URL/摘要）被 prepend 进 `pages.json`，部署后体现在首页时间轴最前
 
 #### Scenario: 倒序排列
 - **WHEN** 首页渲染

@@ -24,9 +24,12 @@ export async function runServe(args) {
     try {
       let rel = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
       if (rel.endsWith('/')) rel += 'index.html'
-      // 防目录穿越
-      const abs = path.normalize(path.join(root, rel))
-      if (!abs.startsWith(root)) { res.writeHead(403).end('forbidden'); return }
+      const abs = path.resolve(root, '.' + (rel.startsWith('/') ? rel : '/' + rel))
+      // 防目录穿越：abs 必须在 root 之内（用 path.relative，不靠字符串前缀）
+      const relCheck = path.relative(root, abs)
+      if (relCheck.startsWith('..') || path.isAbsolute(relCheck)) {
+        res.writeHead(403).end('forbidden'); return
+      }
       const st = await stat(abs).catch(() => null)
       if (!st || !st.isFile()) { res.writeHead(404).end('not found'); return }
       res.writeHead(200, { 'Content-Type': MIME[path.extname(abs)] || 'application/octet-stream' })
@@ -37,8 +40,9 @@ export async function runServe(args) {
   })
 
   return new Promise((resolve) => {
-    server.listen(port, () => {
-      logger.ok(`本地预览：http://localhost:${port}/`)
+    // 只监听本机回环，不对外暴露本地工作区
+    server.listen(port, '127.0.0.1', () => {
+      logger.ok(`本地预览：http://127.0.0.1:${port}/`)
       logger.dim('Ctrl+C 退出')
     })
     // serve 是长驻进程，不 resolve（直到被杀）。测试时不会真跑。
