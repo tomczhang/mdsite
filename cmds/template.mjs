@@ -19,14 +19,23 @@ async function exists(p) {
 export async function runTemplate(args) {
   const sub = args._[0]
   if (sub === 'list') {
+    // index 是站点首页模板，不是 publish --template 的选项，单独区分
+    const SITE = new Set(['index.html'])
     const builtin = await listDir(CLI_TEMPLATES_DIR)
     const local = new Set(await listDir(TEMPLATE_DIR_LOCAL))
-    logger.info('可用模板（* = 已被本地覆盖）：')
+    const name = (f) => f.replace(/\.html$/, '')
+    logger.info('publish 模板（--template <type>，* = 已被本地覆盖）：')
     for (const f of builtin) {
-      console.log(`  ${local.has(f) ? '*' : ' '} ${f.replace(/\.html$/, '')}`)
+      if (SITE.has(f)) continue
+      console.log(`  ${local.has(f) ? '*' : ' '} ${name(f)}`)
     }
     for (const f of local) {
-      if (!builtin.includes(f)) console.log(`  + ${f.replace(/\.html$/, '')}（仅本地）`)
+      if (!builtin.includes(f) && !SITE.has(f)) console.log(`  + ${name(f)}（仅本地）`)
+    }
+    const siteTpls = builtin.filter((f) => SITE.has(f))
+    if (siteTpls.length) {
+      logger.info('站点模板（init 使用，非 --template 选项）：')
+      siteTpls.forEach((f) => console.log(`    ${name(f)}`))
     }
     return 0
   }
