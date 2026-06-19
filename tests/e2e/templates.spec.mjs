@@ -8,6 +8,7 @@ import { readFile, writeFile, mkdir, rm, stat } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { mdToHtml } from '../../lib/markdown.mjs'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
 const TPL = path.join(ROOT, 'templates')
@@ -50,11 +51,18 @@ test.beforeAll(async () => {
 
   // 报告页
   const reportTpl = await readFile(path.join(TPL, 'report.html'), 'utf8')
+  // 用真实 markdown 渲染（含速览卡 + 语义 callout + 表格），验证整条管线
+  const bodyMd = [
+    '<div class="ql-grid"><div class="ql-card"><div class="ql-card-title">卡片A</div><div class="ql-card-body">说明</div></div></div>',
+    '', // 内嵌 HTML 块后必须空行，否则后续 markdown 被并入 HTML 块
+    '## 结论', '这是正文。', '- 要点一', '- 要点二', '',
+    '> [!WARNING]', '> 小心这个坑', '',
+    '| 列1 | 列2 |', '|---|---|', '| <span class="badge badge-green">EXP</span> | `code` |', '',
+    '<div style="height:1500px"></div>', '', '## 背景', '背景说明。', '<div style="height:800px"></div>',
+  ].join('\n')
   const reportHtml = applyVars(reportTpl, {
     TITLE: '近期报告', DATE: daysAgo(1), CATEGORY: 'report', SUMMARY: '这是一句摘要。',
-    BODY: '<h2>结论</h2><p>这是正文。</p><ul><li>要点一</li><li>要点二</li></ul>'
-      + '<div style="height:1500px"></div>'
-      + '<h2>背景</h2><p>背景说明。</p><div style="height:800px"></div>',
+    BODY: mdToHtml(bodyMd),
     SITE_TITLE: 'Test Pages', ROOT: '../../',
   })
   await writeFile(path.join(OUT, recentFile), reportHtml, 'utf8')
@@ -83,6 +91,10 @@ test('report 页渲染正文 + 摘要 + 自动大纲', async ({ page }) => {
   await expect(page.getByText('这是一句摘要。')).toBeVisible()
   await expect(page.locator('.prose-mdsite h2').first()).toHaveText('结论')
   await expect(page.locator('.prose-mdsite li')).toHaveCount(2)
+  // 语义 callout + 速览卡 + 徽章 都渲染
+  await expect(page.locator('.callout-warning')).toBeVisible()
+  await expect(page.locator('.ql-card')).toHaveCount(1)
+  await expect(page.locator('.badge-green')).toHaveText('EXP')
   // 右侧大纲应从正文两个 h2 自动生成
   await expect(page.locator('#outline .outline-link')).toHaveCount(2)
   await page.screenshot({ path: path.join(SHOTS, 'report.png'), fullPage: true })

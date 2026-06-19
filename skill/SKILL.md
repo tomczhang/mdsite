@@ -53,6 +53,34 @@ rm -f "$tmp"
 - `--category` 任意 kebab-case（report / spec / review / dashboard / changelog…）。
 - 物化用安全临时路径，发布后清理临时文件。
 
+### 3.1 报告结构与排版规范（重要，决定成品好不好看）
+
+**总是以「摘要 + 速览」开头**：
+- **摘要**：用 `--summary` 传一句话核心结论（模板会渲染成顶部蓝色 callout）。
+- **速览**：正文第一块用「速览」要点卡网格（3 张左右），用下面这段 HTML（Markdown 里可直接内嵌 HTML，会原样渲染）：
+  ```html
+  <div class="ql-grid">
+    <div class="ql-card"><div class="ql-card-title">要点一</div><div class="ql-card-body">一句话说明</div></div>
+    <div class="ql-card"><div class="ql-card-title">要点二</div><div class="ql-card-body">一句话说明</div></div>
+    <div class="ql-card"><div class="ql-card-title">要点三</div><div class="ql-card-body">一句话说明</div></div>
+  </div>
+  ```
+
+**语义提示块**（按语义定色，别全用普通引用）——用 GitHub 风格：
+```markdown
+> [!NOTE] 说明性补充        > [!TIP] 建议/技巧
+> [!IMPORTANT] 关键信息     > [!WARNING] 需注意的坑
+> [!CAUTION] 高风险/警告
+```
+会渲染成对应颜色+图标的色条 callout。
+
+**表格**：技术报告多用表格；表头/斑马纹模板已带。单元格内可用：
+- 行内代码 `` `code` ``、徽章 `<span class="badge badge-green">EXP</span>`（颜色：green/blue/gray/amber）。
+
+正文用 `##`/`###` 分节（右侧大纲会自动生成），结论/风险用上面的语义块,提升可扫描性。
+
+> [!IMPORTANT] 在 Markdown 里内嵌 HTML 块（如 `<div class="ql-grid">…</div>`）时，**前后都要留空行**，否则紧跟其后的 Markdown 会被并入 HTML 块、不被解析。
+
 ## 4. 把链接转告用户
 
 publish 成功后会输出**真实页面 URL**（形如 `https://<user>.github.io/<repo>/<category>/<date>/<slug>.html`）。**直接把这个链接转告用户**，不要自己拼接路径。站点根可看用户全部报告时间轴（超 30 天自动折叠）。

@@ -42,6 +42,36 @@
     .prose-mdsite img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
     .prose-mdsite hr { border: none; border-top: 1px solid #f0f0f0; margin: 2rem 0; }
 
+    /* 语义提示块（GitHub 风 [!TYPE]）：按语义定色 + 左色条 + 图标 */
+    .callout { margin: 1.2rem 0; padding: .75rem 1rem; border-left: 4px solid; border-radius: 0 8px 8px 0; }
+    .callout-title { font-weight: 600; font-size: .9rem; display: flex; align-items: center; gap: .4rem; margin-bottom: .35rem; }
+    .callout-icon { font-size: 1rem; }
+    .callout-body > :first-child { margin-top: 0; }
+    .callout-body > :last-child { margin-bottom: 0; }
+    .callout-note      { background: #f2f7ff; border-color: #1677ff; }
+    .callout-note .callout-title { color: #1677ff; }
+    .callout-tip       { background: #f0faf4; border-color: #00b42a; }
+    .callout-tip .callout-title { color: #009a29; }
+    .callout-important { background: #f6f2ff; border-color: #7b5cff; }
+    .callout-important .callout-title { color: #6a3ff0; }
+    .callout-warning   { background: #fff9ec; border-color: #ff9a2e; }
+    .callout-warning .callout-title { color: #d97500; }
+    .callout-caution   { background: #fff1f0; border-color: #f53f3f; }
+    .callout-caution .callout-title { color: #cb2634; }
+
+    /* 速览卡片网格（摘要后的「速览」要点卡，见 SKILL 工作流） */
+    .ql-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .9rem; margin: 1rem 0 1.5rem; }
+    .ql-card { background: #fafbfc; border: 1px solid #eef0f2; border-radius: 10px; padding: .9rem 1rem; }
+    .ql-card-title { font-weight: 600; color: #1f2329; font-size: .95rem; margin-bottom: .35rem; }
+    .ql-card-body { font-size: .85rem; color: #6b7280; line-height: 1.65; }
+
+    /* 徽章 / pill（表格内 EXP、状态标签等） */
+    .badge { display: inline-block; padding: .05rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 600; line-height: 1.5; }
+    .badge-green { background: #e8f9ee; color: #009a29; }
+    .badge-blue  { background: #eaf2ff; color: #1677ff; }
+    .badge-gray  { background: #f2f3f5; color: #6b7280; }
+    .badge-amber { background: #fff3e0; color: #d97500; }
+
     /* 右侧大纲（滚动高亮指示器 + 层级缩进） */
     .outline-link { display: block; padding: 4px 0 4px 14px; font-size: 13px; line-height: 1.5; color: #86909c; border-left: 2px solid #f0f0f0; transition: color .15s, border-color .15s; text-decoration: none; }
     .outline-link:hover { color: #1f2329; }
