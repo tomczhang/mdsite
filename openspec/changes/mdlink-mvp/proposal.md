@@ -36,7 +36,7 @@
 ## Impact
 
 - **新增代码**：`bin/mdsite.mjs`；`cmds/{init,publish,doctor,serve,template}.mjs`；`lib/{gh,git,markdown,render,pages-json,config,url,paths,log}.mjs`；`templates/{index,report}.html`；`skill/SKILL.md`；`tests/{unit,e2e}/`。
-- **依赖**：`zx`（$/fs/path 注入）、一个 Markdown 解析器（如 `marked`）；GitHub Pages 截图测试用 Playwright；单测用 vitest。
+- **依赖**：`marked`（md→html）、`yaml`（配置解析）；git/gh 用 node:child_process（不引 zx）；GitHub Pages 截图测试用 Playwright；单测用 vitest。
 - **外部系统**：用户的 GitHub（repo + Pages + token）。维护者侧**无任何后端/基础设施**。
 - **运行时环境**：node>=20，需 `GITHUB_TOKEN`（或 `gh auth`）。
 - **参考（仅借鉴、禁 copy）**：`~/Documents/git/pages`（@ali/aper-pages，gitlab 内部仓，禁推公开 GitHub）。

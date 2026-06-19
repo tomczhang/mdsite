@@ -2,7 +2,7 @@ schema: spec-driven
 
 context: |
   项目：mdsite —— 把一段 Markdown / 对话内容一键转换成「云端可分享的精美 HTML 页面」。
-  形态：skill + CLI（JavaScript / Node ESM，node>=20，用 zx 注入 $/fs/path）。
+  形态：skill + CLI（JavaScript / Node ESM，node>=20；git/gh 用 node:child_process 封装，不引 zx）。
   分发：BYO-host —— 部署到【每个用户自己的 GitHub】repo + GitHub Pages（gh-pages 分支），
         用用户自己的 GITHUB_TOKEN / gh 凭证。维护者不托管、不聚合任何用户内容，是「工具作者」非「平台方」。
 
@@ -11,7 +11,7 @@ context: |
 
   关键架构决策（已和 chi-zhang / Researcher 对齐）：
   - 部署：GitHub Pages 分支部署只支持仓库根或 /docs，不支持 /src ⇒ 用 gh-pages 分支、内容放分支根。
-  - 认证：git remote 走 token-HTTPS（https://x-access-token:$GITHUB_TOKEN@github.com/<repo>.git），不是 SSH。
+  - 认证：HTTPS，不用 SSH。remote URL【不含 token】；推/取时经 GIT_ASKPASS 把用户凭证只注入子进程 env，token 绝不落盘（不进 .git/config/日志）。
   - 阿里→GitHub 的全部耦合收敛在两个 lib：gh.mjs（repo/Pages 操作，取代 aper 的 a1 pipeline，
     GitHub Pages 下 pipeline 层塌缩成「开一次 Pages + push 即自动部署」）和 git.mjs（clone/commit/push/rebase
     + pages.json 多设备语义合并；逻辑照搬思路但重写）。
@@ -22,7 +22,7 @@ context: |
     严禁任何跨用户汇总入口/中心服务**（否则维护者变平台方、担审核责任）。
   - project pages base 带 /<repo>/ ⇒ 模板内链接/资源必须相对路径或正确 <base>，禁止裸 /index.html 绝对路径。
 
-  本地工作区：~/.mdsite（env MDSITE_HOME 可覆盖），是个 git 仓库；src/pages.json 为报告索引。
+  本地工作区：~/.mdsite（env MDSITE_HOME 可覆盖）= gh-pages 分支工作树，站点在【工作区根】；根 pages.json 为报告索引；mdsite.yml/templates/.cache 经 .gitignore 排除。
   publish 输入：.md（markdown.mjs 转正文→灌模板）和 .html（直通）都支持，内部统一产出自包含 HTML。
 
   MVP 范围：CLI 骨架(bin/cmds/lib) + 1 个 report 模板 + markdown→HTML + init/publish/doctor/serve/template

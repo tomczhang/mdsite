@@ -27,11 +27,16 @@
 - **THEN** 工具按用户显式意图覆盖，并在输出中明确告知发生了覆盖
 
 ### Requirement: 仓库主页可读（默认分支 = gh-pages + README）
-`init` 完成后，仓库的 GitHub 主页 SHALL 呈现有意义的内容，而非一个空的 `main`/README。具体：默认分支 SHALL 设为 `gh-pages`（站点所在分支）；若存在仅含 auto-init README 的空 `main`，SHALL 删除；gh-pages 站点根 SHALL 含一份 `README.md`（GitHub 在默认分支主页渲染，含指向 live 站点的链接）。
+对**本次由工具新建**的 repo，`init` 完成后其 GitHub 主页 SHALL 呈现有意义的内容，而非一个空的 `main`/README：默认分支 SHALL 设为 `gh-pages`，并 SHALL 删除 auto-init 产生的空 `main`；gh-pages 站点根 SHALL 含一份 `README.md`（GitHub 在默认分支主页渲染，含指向 live 站点的链接）。
+**对复用的已有 repo**，工具 SHALL NOT 修改其默认分支、SHALL NOT 删除其 `main`（那可能是用户真实代码，删除即数据丢失）；只部署 gh-pages 并写入站点 `README.md`。
 
-#### Scenario: 主页不再是空 README
-- **WHEN** `init` 完成后访问仓库的 GitHub 主页
+#### Scenario: 新建 repo 的主页不再是空 README
+- **WHEN** 工具新建一个 repo 并 `init` 完成后访问其 GitHub 主页
 - **THEN** 默认分支是 `gh-pages`，主页渲染站点 `README.md`（含 live 链接），不存在只有空 README 的 `main`
+
+#### Scenario: 复用已有 repo 不动其 main
+- **WHEN** 对一个已存在、且 `main` 含用户内容的 repo 执行 `init`
+- **THEN** 工具不修改其默认分支、不删除其 `main`，只在 gh-pages 上部署站点
 
 ### Requirement: gh-pages 分支根布局
 工具 SHALL 把对外服务的页面内容放在 `gh-pages` 分支的**仓库根**（而非 `/src` 子目录），以满足 GitHub Pages 分支部署只能伺服仓库根或 `/docs` 的约束。
