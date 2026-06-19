@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest'
-import { slugifyTitle, makeFilename } from '../../lib/slug.mjs'
+import { slugifyTitle, makeFilename, uniqueName } from '../../lib/slug.mjs'
 
 test('slugifyTitle path-safe 清洗', () => {
   expect(slugifyTitle('Hello, World! / 测试')).toBe('hello-world')
@@ -30,4 +30,22 @@ test('真实随机 hash 不重复（极大概率）', () => {
   const now = new Date()
   const set = new Set(Array.from({ length: 50 }, () => makeFilename({ title: 'x', now })))
   expect(set.size).toBeGreaterThan(1)
+})
+
+test('uniqueName 跳过已占用候选', async () => {
+  const seq = ['a.html', 'a.html', 'b.html']
+  let i = 0
+  const taken = new Set(['a.html'])
+  const got = await uniqueName(() => seq[i++], (c) => taken.has(c))
+  expect(got).toBe('b.html')
+})
+
+test('uniqueName 全部碰撞 → null', async () => {
+  const got = await uniqueName(() => 'x.html', () => true, 3)
+  expect(got).toBeNull()
+})
+
+test('uniqueName 支持异步 takenFn', async () => {
+  const got = await uniqueName(() => 'ok.html', async () => false)
+  expect(got).toBe('ok.html')
 })

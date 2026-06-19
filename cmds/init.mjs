@@ -3,6 +3,7 @@ import { writeFile, mkdir, access } from 'node:fs/promises'
 import path from 'node:path'
 import { whoami, repoView, repoCreate, enablePages, ghPagesState, SITE_MARKER } from '../lib/gh.mjs'
 import { isRepo, initWorkspace, cloneBranch, commitAll, push, originUrl, setOrigin } from '../lib/git.mjs'
+import { normalizeRepo, sameRepo } from '../lib/repo.mjs'
 import { defaultConfig, writeConfig, readConfig } from '../lib/config.mjs'
 import { renderTemplateTo, varsFromConfig } from '../lib/render.mjs'
 import {
@@ -35,14 +36,15 @@ export async function runInit(args) {
   }
   logger.step(`目标仓库：${repo}`)
 
-  // 2b. 本地工作区已指向别的 repo → BLOCK（避免发布到旧仓库）
+  // 2b. 本地工作区已指向别的 repo → BLOCK（避免发布到旧仓库）。
+  //     用精确解析比对，不用 substring（避免 alice/pages-old≈alice/pages 误判）。
   if (await isRepo(MDLINK_HOME)) {
     const existingCfg = await readConfig()
     const localRepo = existingCfg?.remote?.repo
     const localOrigin = await originUrl(MDLINK_HOME)
     const mismatch =
-      (localRepo && localRepo !== repo) ||
-      (localOrigin && !localOrigin.includes(`${repo}.git`) && !localOrigin.includes(`/${repo}`))
+      (localRepo && !sameRepo(localRepo, repo)) ||
+      (normalizeRepo(localOrigin) && !sameRepo(localOrigin, repo))
     if (mismatch && !force) {
       logger.error(
         `本地工作区 ${MDLINK_HOME} 已绑定别的仓库（config: ${localRepo || '?'}，origin: ${localOrigin || '?'}）。\n` +

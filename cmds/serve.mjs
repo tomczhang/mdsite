@@ -16,20 +16,28 @@ const MIME = {
   '.jpg': 'image/jpeg',
 }
 
+/**
+ * 把请求路径安全解析到 root 之内的绝对路径。越界（`..`/绝对路径穿越）返回 null。
+ * 抽成纯函数便于单测目录穿越防护。
+ */
+export function safeResolve(root, urlPath) {
+  let rel = urlPath
+  if (rel.endsWith('/')) rel += 'index.html'
+  const abs = path.resolve(root, '.' + (rel.startsWith('/') ? rel : '/' + rel))
+  const relCheck = path.relative(root, abs)
+  if (relCheck.startsWith('..') || path.isAbsolute(relCheck)) return null
+  return abs
+}
+
 export async function runServe(args) {
   const port = Number(args.flags.port) || 1700
   const root = MDLINK_HOME
 
   const server = http.createServer(async (req, res) => {
     try {
-      let rel = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
-      if (rel.endsWith('/')) rel += 'index.html'
-      const abs = path.resolve(root, '.' + (rel.startsWith('/') ? rel : '/' + rel))
-      // 防目录穿越：abs 必须在 root 之内（用 path.relative，不靠字符串前缀）
-      const relCheck = path.relative(root, abs)
-      if (relCheck.startsWith('..') || path.isAbsolute(relCheck)) {
-        res.writeHead(403).end('forbidden'); return
-      }
+      const rel = decodeURIComponent(new URL(req.url, 'http://localhost').pathname)
+      const abs = safeResolve(root, rel)
+      if (!abs) { res.writeHead(403).end('forbidden'); return }
       const st = await stat(abs).catch(() => null)
       if (!st || !st.isFile()) { res.writeHead(404).end('not found'); return }
       res.writeHead(200, { 'Content-Type': MIME[path.extname(abs)] || 'application/octet-stream' })

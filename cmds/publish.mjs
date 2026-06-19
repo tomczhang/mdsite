@@ -4,13 +4,14 @@ import path from 'node:path'
 import { readConfig } from '../lib/config.mjs'
 import { mdToHtml } from '../lib/markdown.mjs'
 import { renderTemplate, renderTemplateTo, varsFromConfig, siteTitleOf } from '../lib/render.mjs'
-import { makeFilename } from '../lib/slug.mjs'
+import { makeFilename, uniqueName } from '../lib/slug.mjs'
 import { readPagesJson, writePagesJson } from '../lib/pages-json.mjs'
 import { pageUrlOf } from '../lib/url.mjs'
 import { ghPagesState, SITE_MARKER } from '../lib/gh.mjs'
 import {
-  commitAll, push, fetchRemote, commitsBehind, rebaseFromRemote,
+  commitAll, push, fetchRemote, commitsBehind, rebaseFromRemote, originUrl,
 } from '../lib/git.mjs'
+import { normalizeRepo, sameRepo } from '../lib/repo.mjs'
 import { MDLINK_HOME, INDEX_HTML, PAGES_JSON } from '../lib/paths.mjs'
 import { logger, redact } from '../lib/log.mjs'
 
@@ -38,6 +39,16 @@ export async function runPublish(args) {
   const cfg = await readConfig()
   if (!cfg) { logger.error('尚未初始化，请先运行 `mdlink init`'); return 2 }
 
+  // BYO 红线：本地 git origin 必须与配置的 repo 一致，否则会"检查 A 仓、推到 B 仓"。
+  const localOrigin = await originUrl(MDLINK_HOME)
+  if (!sameRepo(localOrigin, cfg.remote.repo)) {
+    logger.error(
+      `本地 origin（${normalizeRepo(localOrigin) || localOrigin || '无'}）与配置 repo（${cfg.remote.repo}）不一致，拒绝发布。\n` +
+      `  请运行 \`mdlink init --force\` 修复本地 origin/config，再发布。`,
+    )
+    return 2
+  }
+
   // 覆盖保护：远端 gh-pages 若变成非 mdlink 站点则拦截
   const state = await ghPagesState(cfg.remote.repo, 'gh-pages')
   if (state === 'foreign') {
@@ -62,14 +73,16 @@ export async function runPublish(args) {
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const pages = await readPagesJson(PAGES_JSON)
   const taken = new Set(pages.map((p) => p.filename))
-  let filename, relPath, absPath
-  for (let attempt = 0; ; attempt++) {
-    filename = makeFilename({ title, now, strategy: cfg.storage?.slug_strategy })
-    relPath = `${category}/${date}/${filename}`
-    absPath = path.join(MDLINK_HOME, relPath)
-    if (!taken.has(relPath) && !(await exists(absPath))) break
-    if (attempt >= 10) { logger.error('生成唯一文件名失败（连续碰撞），请重试'); return 1 }
-  }
+  const filename = await uniqueName(
+    () => makeFilename({ title, now, strategy: cfg.storage?.slug_strategy }),
+    async (fn) => {
+      const rp = `${category}/${date}/${fn}`
+      return taken.has(rp) || (await exists(path.join(MDLINK_HOME, rp)))
+    },
+  )
+  if (!filename) { logger.error('生成唯一文件名失败（连续碰撞），请重试'); return 1 }
+  const relPath = `${category}/${date}/${filename}`
+  const absPath = path.join(MDLINK_HOME, relPath)
   const root = '../'.repeat(relPath.split('/').length - 1) // 报告页回根的相对前缀
 
   const repoName = String(cfg.remote.repo).split('/')[1] || 'pages'
