@@ -5,57 +5,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{TITLE}}</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='72' text-anchor='middle' font-size='80'>📄</text></svg>">
-  <!-- 自包含：依赖全走公网 jsdelivr CDN，产物就一个 .html -->
+  <!-- 单文件自包含：依赖全走公网 jsdelivr CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js" defer></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; }
     html { scroll-behavior: smooth; }
-    .prose-mdsite h1 { font-size: 1.875rem; font-weight: 700; margin: 1.5rem 0 1rem; line-height: 1.3; }
-    .prose-mdsite h2 { font-size: 1.5rem; font-weight: 600; margin: 1.4rem 0 .8rem; }
-    .prose-mdsite h3 { font-size: 1.25rem; font-weight: 600; margin: 1.2rem 0 .6rem; }
-    .prose-mdsite p { margin: .75rem 0; line-height: 1.8; color: #1f2937; }
-    .prose-mdsite ul, .prose-mdsite ol { margin: .75rem 0; padding-left: 1.5rem; }
-    .prose-mdsite li { margin: .3rem 0; line-height: 1.7; }
+    [x-cloak] { display: none !important; }
+
+    /* 正文排版（语雀/Notion 风：宽松行距、清晰层级） */
+    .prose-mdsite { color: #1f2329; font-size: 16px; line-height: 1.8; }
+    .prose-mdsite > :first-child { margin-top: 0; }
+    .prose-mdsite h1, .prose-mdsite h2, .prose-mdsite h3, .prose-mdsite h4 { scroll-margin-top: 5rem; font-weight: 600; color: #1f2329; line-height: 1.4; }
+    .prose-mdsite h1 { font-size: 1.7rem; margin: 2rem 0 1rem; }
+    .prose-mdsite h2 { font-size: 1.375rem; margin: 2rem 0 .9rem; padding-bottom: .4rem; border-bottom: 1px solid #f0f0f0; }
+    .prose-mdsite h3 { font-size: 1.15rem; margin: 1.5rem 0 .6rem; }
+    .prose-mdsite h4 { font-size: 1rem; margin: 1.2rem 0 .5rem; color: #424750; }
+    .prose-mdsite p { margin: .85rem 0; }
+    .prose-mdsite ul, .prose-mdsite ol { margin: .85rem 0; padding-left: 1.6rem; }
+    .prose-mdsite li { margin: .35rem 0; }
     .prose-mdsite ul { list-style: disc; }
     .prose-mdsite ol { list-style: decimal; }
-    .prose-mdsite a { color: #2563eb; text-decoration: underline; }
-    .prose-mdsite code { background: #f3f4f6; padding: .1rem .35rem; border-radius: .25rem; font-size: .9em; }
-    .prose-mdsite pre { background: #0f172a; color: #e2e8f0; padding: 1rem 1.25rem; border-radius: .5rem; overflow-x: auto; margin: 1rem 0; }
-    .prose-mdsite pre code { background: transparent; color: inherit; padding: 0; }
-    .prose-mdsite blockquote { border-left: 3px solid #cbd5e1; padding-left: 1rem; color: #475569; margin: 1rem 0; }
-    .prose-mdsite table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
-    .prose-mdsite th, .prose-mdsite td { border: 1px solid #e5e7eb; padding: .5rem .75rem; text-align: left; }
-    .prose-mdsite th { background: #f9fafb; font-weight: 600; }
-    .prose-mdsite img { max-width: 100%; border-radius: .5rem; }
+    .prose-mdsite li::marker { color: #86909c; }
+    .prose-mdsite a { color: #1677ff; text-decoration: none; border-bottom: 1px solid rgba(22,119,255,.3); }
+    .prose-mdsite a:hover { border-bottom-color: #1677ff; }
+    .prose-mdsite strong { color: #1f2329; font-weight: 600; }
+    .prose-mdsite code { background: #f2f3f5; color: #d4380d; padding: .12rem .4rem; border-radius: 4px; font-size: .88em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .prose-mdsite pre { background: #0d1117; color: #e6edf3; padding: 1.1rem 1.3rem; border-radius: 10px; overflow-x: auto; margin: 1.2rem 0; font-size: .9rem; line-height: 1.6; }
+    .prose-mdsite pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+    .prose-mdsite blockquote { border-left: 3px solid #1677ff; background: #f7f9ff; padding: .6rem 1rem; color: #4e5969; margin: 1.1rem 0; border-radius: 0 6px 6px 0; }
+    .prose-mdsite blockquote p { margin: .3rem 0; }
+    .prose-mdsite table { border-collapse: collapse; margin: 1.2rem 0; width: 100%; font-size: .92rem; }
+    .prose-mdsite th, .prose-mdsite td { border: 1px solid #e5e6eb; padding: .55rem .85rem; text-align: left; }
+    .prose-mdsite th { background: #f7f8fa; font-weight: 600; }
+    .prose-mdsite tr:nth-child(even) td { background: #fafbfc; }
+    .prose-mdsite img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
+    .prose-mdsite hr { border: none; border-top: 1px solid #f0f0f0; margin: 2rem 0; }
+
+    /* 右侧大纲（滚动高亮指示器 + 层级缩进） */
+    .outline-link { display: block; padding: 4px 0 4px 14px; font-size: 13px; line-height: 1.5; color: #86909c; border-left: 2px solid #f0f0f0; transition: color .15s, border-color .15s; text-decoration: none; }
+    .outline-link:hover { color: #1f2329; }
+    .outline-link.active { color: #1677ff; border-left-color: #1677ff; font-weight: 500; }
+    .outline-link.lvl-3 { padding-left: 26px; font-size: 12px; }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
-    <div class="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-      <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600">&larr; 返回首页</a>
-      <div class="flex items-center gap-3">
-        <span class="text-xs text-gray-400">{{DATE}}</span>
-        <button onclick="navigator.clipboard && navigator.clipboard.writeText(location.href)"
-                title="复制链接"
-                class="text-xs text-gray-400 hover:text-blue-600 border border-gray-200 rounded px-2 py-1">分享</button>
+<body class="bg-white text-gray-800 min-h-screen">
+
+  <!-- 顶部导航 -->
+  <nav class="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+      <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600 transition-colors">&larr; 返回首页</a>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-gray-400 mr-1">{{DATE}}</span>
+        <button onclick="mdsite.share()" title="分享链接"
+                class="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 6l-4-4-4 4M12 2v13"/></svg>
+        </button>
+        <button onclick="mdsite.copyHTML()" title="复制整页 HTML"
+                class="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </button>
       </div>
     </div>
   </nav>
 
-  <main class="max-w-3xl mx-auto px-6 py-10">
-    <header class="mb-8 pb-6 border-b border-gray-100">
-      <p class="text-xs uppercase tracking-wide text-blue-600 font-medium mb-2">{{CATEGORY}}</p>
-      <h1 class="text-3xl font-bold text-gray-900 leading-tight">{{TITLE}}</h1>
-      <p class="mt-3 text-sm text-gray-500">{{DATE}}</p>
-    </header>
-    <article class="prose-mdsite">
-      {{BODY}}
-    </article>
-  </main>
+  <div class="max-w-6xl mx-auto px-6 lg:flex lg:gap-10">
+    <!-- 主内容 -->
+    <main class="flex-1 min-w-0 py-10">
+      <header class="mb-8 pb-6 border-b border-gray-100">
+        <p class="text-xs uppercase tracking-widest text-blue-600 font-semibold mb-2">{{CATEGORY}}</p>
+        <h1 class="text-3xl font-bold text-gray-900 leading-tight">{{TITLE}}</h1>
+        <p class="mt-3 text-sm text-gray-400">{{DATE}}</p>
+        <div class="mt-5 bg-blue-50/70 border-l-4 border-blue-500 px-4 py-3 rounded-r-lg">
+          <p class="text-[15px] text-gray-600 leading-relaxed">{{SUMMARY}}</p>
+        </div>
+      </header>
 
-  <footer class="max-w-3xl mx-auto px-6 py-8 text-center text-xs text-gray-400">
-    由 <span class="font-medium">{{SITE_TITLE}}</span> 生成 · <a href="{{ROOT}}index.html" class="hover:text-blue-600">查看全部报告</a>
-  </footer>
+      <article id="article" class="prose-mdsite">
+        {{BODY}}
+      </article>
+
+      <footer class="border-t border-gray-100 pt-6 mt-12 text-sm text-gray-400">
+        由 <span class="font-medium text-gray-500">{{SITE_TITLE}}</span> 生成 · {{DATE}} ·
+        <a href="{{ROOT}}index.html" class="hover:text-blue-600">查看全部报告</a>
+      </footer>
+    </main>
+
+    <!-- 右侧大纲（自动从正文标题生成；窄屏隐藏） -->
+    <aside class="hidden lg:block w-56 flex-shrink-0">
+      <div class="sticky top-20 py-10 overflow-y-auto max-h-[calc(100vh-5rem)]">
+        <p id="outline-title" class="text-xs font-medium text-gray-400 mb-3 pl-3.5 hidden">目录</p>
+        <nav id="outline"></nav>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // 从正文标题(h2/h3)自动生成右侧大纲 + 滚动高亮，适配任意 Markdown
+    (function () {
+      const article = document.getElementById('article');
+      const outline = document.getElementById('outline');
+      if (!article || !outline) return;
+      const heads = article.querySelectorAll('h2, h3');
+      if (!heads.length) return;
+      document.getElementById('outline-title').classList.remove('hidden');
+      const slug = (t, i) => (t.toLowerCase().replace(/[^\w一-龥]+/g, '-').replace(/^-+|-+$/g, '') || 'sec') + '-' + i;
+      heads.forEach((h, i) => {
+        if (!h.id) h.id = slug(h.textContent, i);
+        const a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        a.className = 'outline-link' + (h.tagName === 'H3' ? ' lvl-3' : '');
+        outline.appendChild(a);
+      });
+      const links = outline.querySelectorAll('.outline-link');
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            links.forEach((l) => l.classList.remove('active'));
+            const a = outline.querySelector('a[href="#' + e.target.id + '"]');
+            if (a) a.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-10% 0px -70% 0px' });
+      heads.forEach((h) => obs.observe(h));
+    })();
+
+    // 分享 / 复制整页 HTML + toast
+    window.mdsite = {
+      async share() {
+        const url = location.href, title = document.title;
+        if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+        try { await navigator.clipboard.writeText(url); mdsite.toast('链接已复制'); } catch (e) { mdsite.toast('复制失败'); }
+      },
+      async copyHTML() {
+        try { await navigator.clipboard.writeText(document.documentElement.outerHTML); mdsite.toast('整页 HTML 已复制'); } catch (e) { mdsite.toast('复制失败'); }
+      },
+      toast(msg) {
+        const el = document.createElement('div');
+        el.textContent = msg;
+        el.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-200 z-[100] pointer-events-none';
+        document.body.appendChild(el);
+        requestAnimationFrame(() => { el.style.opacity = '1'; });
+        setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 250); }, 1700);
+      }
+    };
+  </script>
 </body>
 </html>

@@ -90,6 +90,7 @@ export async function runPublish(args) {
     TITLE: title,
     DATE: date,
     CATEGORY: category,
+    SUMMARY: summary,
     BODY: body,
     SITE_TITLE: cfg.site?.title || siteTitleOf(repoName),
     ROOT: root,

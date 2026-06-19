@@ -51,8 +51,8 @@ test.beforeAll(async () => {
   // 报告页
   const reportTpl = await readFile(path.join(TPL, 'report.html'), 'utf8')
   const reportHtml = applyVars(reportTpl, {
-    TITLE: '近期报告', DATE: daysAgo(1), CATEGORY: 'report',
-    BODY: '<h2>结论</h2><p>这是正文。</p><ul><li>要点一</li><li>要点二</li></ul>',
+    TITLE: '近期报告', DATE: daysAgo(1), CATEGORY: 'report', SUMMARY: '这是一句摘要。',
+    BODY: '<h2>结论</h2><p>这是正文。</p><ul><li>要点一</li><li>要点二</li></ul><h2>背景</h2><p>背景说明。</p>',
     SITE_TITLE: 'Test Pages', ROOT: '../../',
   })
   await writeFile(path.join(OUT, recentFile), reportHtml, 'utf8')
@@ -75,11 +75,14 @@ test.afterAll(async () => {
   await rm(OUT, { recursive: true, force: true })
 })
 
-test('report 页渲染正文', async ({ page }) => {
+test('report 页渲染正文 + 摘要 + 自动大纲', async ({ page }) => {
   await page.goto(`${base}/report/${daysAgo(1)}/recent.html`)
   await expect(page.locator('h1')).toHaveText('近期报告')
-  await expect(page.locator('.prose-mdsite h2')).toHaveText('结论')
+  await expect(page.getByText('这是一句摘要。')).toBeVisible()
+  await expect(page.locator('.prose-mdsite h2').first()).toHaveText('结论')
   await expect(page.locator('.prose-mdsite li')).toHaveCount(2)
+  // 右侧大纲应从正文两个 h2 自动生成
+  await expect(page.locator('#outline .outline-link')).toHaveCount(2)
   await page.screenshot({ path: path.join(SHOTS, 'report.png'), fullPage: true })
 })
 
