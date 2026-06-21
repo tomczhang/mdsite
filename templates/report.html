@@ -85,18 +85,17 @@
   <!-- 顶部导航 -->
   <nav class="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-gray-100">
     <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-      <a href="{{ROOT}}index.html" class="text-sm text-gray-400 hover:text-blue-600 transition-colors">&larr; 返回首页</a>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-400 mr-1">{{DATE}}</span>
+      <!-- 左上品牌标识：点击返回首页 -->
+      <a href="{{ROOT}}index.html" class="flex items-center gap-2 transition-opacity hover:opacity-70" title="返回首页">
+        <span class="w-7 h-7 inline-flex" style="display:inline-flex;width:28px;height:28px;flex:none">{{LOGO}}</span>
+        <span class="text-base font-bold text-gray-900 tracking-tight">mdsite</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-400">{{DATE}}</span>
         <button onclick="mdsite.copyLink()" title="复制链接" aria-label="复制链接"
                 class="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5"/></svg>
         </button>
-        <!-- 品牌徽标（由 mdsite 生成的署名） -->
-        <span class="ml-1 flex items-center gap-1.5 rounded-lg bg-gray-50 pl-1.5 pr-2.5 py-1" title="由 mdsite 生成">
-          <span class="w-5 h-5 inline-flex">{{LOGO}}</span>
-          <span class="text-sm font-bold text-gray-900 tracking-tight">mdsite</span>
-        </span>
       </div>
     </div>
   </nav>
@@ -124,7 +123,7 @@
       </article>
 
       <footer class="border-t border-gray-100 pt-6 mt-12 flex items-center gap-2 text-sm text-gray-400">
-        <span class="w-5 h-5 inline-flex">{{LOGO}}</span>
+        <span class="w-5 h-5 inline-flex" style="display:inline-flex;width:20px;height:20px;flex:none">{{LOGO}}</span>
         <span>由 <span class="font-semibold text-gray-600">mdsite</span> 生成 · {{DATE}}</span>
         <a href="{{ROOT}}index.html" class="ml-auto hover:text-blue-600">查看全部报告 &rarr;</a>
       </footer>
