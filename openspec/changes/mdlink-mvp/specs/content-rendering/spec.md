@@ -46,6 +46,17 @@
 - **WHEN** publish 未指定模板
 - **THEN** 使用内置 `report` 模板渲染
 
+### Requirement: report 页携带 mdsite 品牌标识
+`report` 模板渲染的报告页 SHALL 携带 mdsite 品牌标识：顶部导航右侧 SHALL 显示品牌徽标（M 标识 + `mdsite` 文字），页脚 SHALL 显示「由 mdsite 生成」署名。徽标 SHALL 以**内联 SVG**实现（品牌主题色 `#63fe13`，由 `lib/brand.mjs` 统一提供、`lib/render.mjs` 经 `{{LOGO}}` 占位注入），以保持产物单文件自包含；SHALL NOT 引用任何外部图片资源（png/外链 svg）。
+
+#### Scenario: 报告页含品牌徽标与署名
+- **WHEN** 用 `report` 模板渲染一篇报告
+- **THEN** 顶部导航含 mdsite 品牌徽标（内联 SVG，主题色 `#63fe13`），页脚含「由 mdsite 生成」署名
+
+#### Scenario: 徽标不破坏自包含
+- **WHEN** 检查渲染产物
+- **THEN** 徽标为内联 SVG，不含对任何外部图片文件（png/外链 svg）的引用
+
 ### Requirement: 对话/原始内容 → 在线报告主路径
 团队最高频路径是「在 chat 里把一段对话/分析内容变成在线报告」。skill 工作流 SHALL 能把调用方提供的**原始内容（对话提炼出的 Markdown 或现成 HTML）安全物化**为一个临时 `.md`/`.html` 文件，再走 `publish` 产出报告并**把真实 URL 回传给用户**。该路径 SHALL 有可验收的端到端定义，而不仅停留在文档描述。
 

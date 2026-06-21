@@ -51,3 +51,9 @@
 - [x] 7.3 去中心红线自检：grep/审查确认无任何跨用户聚合入口、无内嵌维护者 token — 全仓
 - [x] 7.3a 凭证泄露自检：publish 后 grep `.git/config`/日志确认无明文 token；slug 碰撞用例（同标题同日两篇）单测 — `tests/`
 - [x] 7.4 跑全量 `vitest` + Playwright 截图，转 in_review 交 @Reviewer
+
+## 8. 品牌标识
+
+- [x] 8.1 `lib/brand.mjs`：品牌主题色 `#63fe13` + 内联 M 徽标 SVG（`MDSITE_BRAND_COLOR` / `MDSITE_LOGO_SVG`） — `lib/brand.mjs`
+- [x] 8.2 `lib/render.mjs`：渲染时注入 `{{LOGO}}` / `{{BRAND_COLOR}}` 占位 — `lib/render.mjs`
+- [x] 8.3 `templates/report.html`：顶部导航品牌徽标 + 页脚「由 mdsite 生成」署名（内联 SVG，自包含） — `templates/report.html`
